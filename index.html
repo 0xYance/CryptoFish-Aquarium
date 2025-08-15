@@ -1,0 +1,4674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cryptofish Pixel Aquarium</title>
+  <style>
+/* Theme Variables and Color Scheme */
+:root {
+  --bg: #0b1020;        /* deep ocean */
+  --panel: #121a33;     /* UI panel */
+  --ink: #cdd7ff;       /* text */
+  --ink-dim: #8ca0ff;   /* muted */
+  --accent: #64ffd1;    /* aqua */
+  --danger: #ff6b6b;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Layout Structure */
+.wrap {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  height: 100%;
+}
+
+header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #0c1532, #0a0f24);
+}
+
+header h1 {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+
+header .spacer {
+  flex: 1;
+}
+
+.panel {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px;
+  background: var(--panel);
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 210px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sep {
+  height: 800px;
+  background: rgba(255, 255, 255, .06);
+  margin: 6px 0;
+}
+
+#stage {
+  position: relative;
+  flex: 1;
+  min-height: 800px;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* Floating reopen button when panel hidden */
+#menuFab {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 20;
+  display: none;
+  background: #0c1a3a;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+/* UI Components and Interactive Elements */
+header .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+label {
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+input, textarea, select {
+  background: #0b1330;
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 10px;
+  padding: 8px 10px;
+  outline: none;
+}
+
+textarea {
+  min-height: 800px;
+  resize: vertical;
+}
+
+button {
+  background: #0c1a3a;
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.shop-btn{padding:4px 8px;border-radius:8px;font-size:12px}
+button:hover {
+  border-color: rgba(255, 255, 255, .25);
+}
+
+header button {
+  background: #0c1a3a;
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.primary {
+  background: linear-gradient(180deg, #17336b, #122650);
+  border-color: #355dff;
+  box-shadow: 0 0 0 2px rgba(53, 93, 255, .15) inset;
+}
+
+.danger {
+  background: #2a0f16;
+  border-color: #6b1a26;
+  color: #ffd1d1;
+}
+
+.muted {
+  opacity: .8;
+}
+
+.hud {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  background: rgba(0, 0, 0, .35);
+  backdrop-filter: blur(6px);
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.stat {
+  color: var(--ink-dim);
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+#testOut {
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: #0b1330;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.wallet-info {
+  background: #0c1a3a;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 10px;
+  padding: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.success {
+  color: var(--accent);
+}
+
+.error {
+  color: var(--danger);
+}
+  
+/* Tabs */
+.tabs { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.tab { background:#0c1a3a; border:1px solid rgba(255,255,255,.1); border-radius:999px; padding:6px 12px; }
+.tab.active { border-color:#355dff; box-shadow:0 0 0 2px rgba(53,93,255,.15) inset; }
+.subpanel { display:none; gap:12px; flex-wrap:wrap; }
+.subpanel.active { display:flex; }
+
+/* Fix: only one menu control visible at a time */
+#menuFab { z-index: 50; }
+body.menu-hidden header .hide-when-fab { display:none; }
+body:not(.menu-hidden) #menuBtn { display:none !important; }
+body.menu-hidden #menuBtn { display:block !important; }
+
+/* Removed controls (kept here in case old script references IDs) */
+#contract, label[for="contract"], #thresh, #px { display:none !important; }
+
+/* Google-like top tabs */
+.top-tabs{
+  display:flex; gap:24px; align-items:center;
+  padding:8px 12px 0; position:sticky; top:0; z-index:60;
+  background:linear-gradient(#0b1534 0%, #0b1534 100%);
+}
+.tab-link{
+  background:transparent; border:none; color:#e2e8ff; padding:8px 2px;
+  font-weight:600; letter-spacing:.1px;
+}
+.tab-link.active{ border-bottom:3px solid #84a0ff; }
+.tab-link:not(.active){ opacity:.8; }
+.tab-link:focus{ outline:none; }
+
+/* Taller aquarium */
+#stage { height: calc(100vh - 120px) !important; min-height: 720px; }
+
+/* Smaller header title */
+header h1 {
+  font-size: 1rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* When menu panel is hidden, remove underline from any tab marked active */
+.money-hud{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);padding:8px 10px;border-radius:10px;font-size:12px;border:1px solid rgba(255,255,255,.1);display:inline-flex;align-items:center;gap:8px}
+.money-hud strong{letter-spacing:.4px}
+
+body.menu-hidden .top-tabs .tab-link.active { border-bottom: 0; opacity: .8; }
+
+/* === Shop Overlay === */
+.shop-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:70}
+.shop-overlay.open{display:flex}
+.shop-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
+.shop-card{position:relative;background:#0d1430;border:1px solid rgba(255,255,255,.12);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.45);padding:16px;min-width:640px;max-width:90vw}
+.shop-card header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.shop-card header h2{margin:0;font-size:16px}
+.shop-close{position:absolute;top:10px;right:10px;background:#0c1a3a;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 8px;cursor:pointer}
+.shop-grid{display:grid;grid-template-columns:repeat(5, 1fr);gap:10px}
+.shop-tile{background:#0b1330;border:1px solid rgba(255,255,255,.1);border-radius:10px;min-height:108px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;cursor:pointer}
+.shop-tile.locked{opacity:.6;cursor:not-allowed}
+.shop-tile .title{font-weight:600}
+.shop-tile .price{font-size:12px;color:#8ca0ff}
+/* tiny pixel sailboat (inline SVG looks crisp with pixelated rendering) */
+.pixel-sailboat{width:32px;height:32px;image-rendering:pixelated}
+.pixel-crab{width:32px;height:32px;image-rendering:pixelated}
+
+.success-flash{box-shadow:0 0 0 2px rgba(100,255,209,.6) inset, 0 0 16px rgba(100,255,209,.6);}
+</style>
+  <!-- Ethers v5 for ERC-721 tokenURI lookups on Ethereum mainnet -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+<script>
+
+// === Simple Money System (fallback) ===
+window.Money = (function(){
+  let el = null;
+  function ensure(){ if(!el) el = document.getElementById('money'); }
+  function get(){ ensure(); const v = parseInt(el.textContent||'0',10); return isNaN(v)?0:v; }
+  function set(v){ ensure(); el.textContent = String(Math.max(0, v|0)); }
+  function add(v){ set(get()+ (v|0)); }
+  function spend(v){ const cur=get(); if(cur>=v){ set(cur - (v|0)); return true } return false }
+  return { get, set, add, spend };
+})();
+
+function initTabs(){
+  const tabs = document.querySelectorAll('.tab-link');
+  const panels = document.querySelectorAll('.subpanel');
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const key = btn.getAttribute('data-tab');
+      tabs.forEach(b=>b.classList.toggle('active', b===btn));
+      panels.forEach(p=>p.classList.toggle('active', p.id === 'tab-' + key));
+    });
+  });
+}
+
+window.addEventListener('load', async function(){
+  if (typeof initTabs === 'function') initTabs();
+  if (window.DOMElements && typeof DOMElements.init === 'function') DOMElements.init();
+});
+
+</script>
+
+<script>
+// -- Money fallback (ensures availability even if earlier inline code was ignored due to <script src>)
+window.Money = window.Money || (function(){
+  let el = null;
+  function ensure(){ if(!el) el = document.getElementById('money'); }
+  function get(){ ensure(); const v = parseInt((el && el.textContent) || '0', 10); return isNaN(v)?0:v; }
+  function set(v){ ensure(); if (el) el.textContent = String(Math.max(0, v|0)); }
+  function add(v){ set(get() + (v|0)); }
+  function spend(v){ const cur=get(); if(cur>=v){ set(cur - (v|0)); return true } return false }
+  return { get, set, add, spend };
+})();
+</script>
+
+<style>
+/* === Mode Selection Modal === */
+.mode-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);z-index:9999}
+.mode-card{background:#0d1430;border:1px solid rgba(255,255,255,.12);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.45);padding:18px;min-width:680px;max-width:92vw}
+.mode-card header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mode-card h2{margin:0;font-size:18px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mode-opt{border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;background:#0b1330;display:flex;flex-direction:column;gap:8px}
+.mode-opt h3{margin:0 0 4px 0}
+.mode-opt p{margin:0;opacity:.9}
+.mode-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+.mode-btn{background:#0c1a3a;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600}
+.mode-btn.primary{background:linear-gradient(180deg,#17336b,#122650);border-color:#355dff;box-shadow:0 0 0 2px rgba(53,93,255,.15) inset}
+/* Game Mode hides the editing menus; keeps money HUD + shop */
+body.game-mode .top-tabs,
+body.game-mode #panel{display:none !important}
+/* Hide the header "Peaceful Mode" checkbox when modes are managed by modal */
+#mandatoryFeeding{display:none !important}
+label[for="mandatoryFeeding"]{display:none !important}
+/* Ensure money HUD is visible above modal */
+#moneyHud{z-index: 40}
+</style>
+
+<style>
+/* --- FIX: Allow Secret Menu to open in Game Mode --- */
+body.game-mode.show-secret #panel { display: flex !important; }
+</style>
+
+</head>
+<body>
+
+<!-- Top Tabs -->
+<header>
+  <div class="dot" id="secretDot" title="Click to open Secret Menu" style="cursor:pointer;"></div>
+  <h1>Cryptofish Pixel Aquarium</h1>
+  <div class="stat" id="status">ready</div>
+  <div class="spacer"></div>
+  <button id="fsBtn" title="Toggle Fullscreen (F)">Fullscreen</button> <button id="perfBtn" title="Toggle Performance Mode">Performance</button>
+  <label class="row" style="gap:6px"><input type="checkbox" id="mandatoryFeeding"/> Peaceful Mode</label>
+  
+
+<script>
+// === Performance Controller ===
+(function(){
+  if (window.Perf) return;
+  const Perf = window.Perf = {
+    mode: false,
+    targetFPS: 60,
+    renderScale: 1, // 1 = full res; 0.75/0.66 lower res for speed
+    toggle(){
+      this.mode = !this.mode;
+      this.targetFPS = this.mode ? 30 : 60;
+      this.renderScale = this.mode ? 0.75 : 1;
+      try{ if (window.AquariumState && typeof window.AquariumState.setStatus === 'function') window.AquariumState.setStatus(this.mode ? 'Performance mode: ON' : 'Performance mode: OFF'); }catch(_){}
+      try{ if (window.CanvasManager && typeof window.CanvasManager.resize === 'function') window.CanvasManager.resize(); }catch(_){}
+    }
+  };
+  // Hook up button
+  document.addEventListener('click', function(e){
+    const btn = e.target && (e.target.id === 'perfBtn' ? e.target : (e.target.closest && e.target.closest('#perfBtn')));
+    if (!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    Perf.toggle();
+  }, true);
+})();
+</script>
+</header>
+<script>
+// --- FIX: Secret Menu opener works in Game Mode ---
+(function(){
+  function openSecretPanel(){
+    try {
+      document.body.classList.add('show-secret');
+      var panel = document.getElementById('panel');
+      if (panel) panel.style.display = ''; // ensure visible
+      // activate the secret subpanel
+      var secret = document.getElementById('tab-secret');
+      var panels = document.querySelectorAll('.subpanel');
+      panels.forEach(function(p){ p.classList.toggle('active', p === secret); });
+      // de-activate any top tab selection
+      var tabs = document.querySelectorAll('.tab-link');
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+    } catch(e){ console.warn('openSecretPanel error', e); }
+  }
+  document.addEventListener('click', function(e){
+    var dot = e.target && (e.target.id === 'secretDot' ? e.target : (e.target.closest && e.target.closest('#secretDot')));
+    if (!dot) return;
+    e.preventDefault(); e.stopPropagation();
+    openSecretPanel();
+  }, true);
+})();
+</script>
+
+<nav class="top-tabs" id="topTabs">
+  <button class="tab-link active" data-tab="addFish">Add Fish</button>
+  <button class="tab-link" data-tab="customize">Customize Fish</button>
+  <button class="tab-link" data-tab="feeding">Feeding Menu</button>
+  <button class="tab-link" data-tab="shop">Shop</button><!-- Secret Menu tab hidden: open via green dot -->
+</nav>
+
+<div class="panel" id="panel">
+  
+
+  <!-- Add Fish tab -->
+  <div class="subpanel active" id="tab-addFish">
+    <div class="group" style="min-width:320px">
+      <label>Ethereum Wallet Address</label>
+      <input id="walletAddress" placeholder="0x (paste your wallet address)"/>
+      <div class="row">
+        <button class="primary" id="loadWalletFish">Load My Fish</button>
+        <button id="clearWallet">Clear</button>
+      </div>
+      <div id="walletInfo" class="wallet-info" style="display:none;"></div>
+      <small class="stat">Automatically load all your Cryptofish NFTs from your wallet.</small>
+    </div>
+
+    <!-- Removed: Ethereum Contract (now fixed to Cryptofish) -->
+    
+    <div class="group" style="min-width:320px">
+      <label>Image URL (add fish by direct image link)</label>
+      <input id="imgUrl" placeholder="https:// (ipfs:// also works)"/>
+      <div class="row">
+        <button class="primary" id="addByUrl">Add fish by URL</button>
+        <button id="shot">Export PNG</button>
+      </div>
+
+      <div class="row">
+        <button id="addRandomCryptofish" title="Add a random fish from the Cryptofish collection">🎲 Add Random Cryptofish</button>
+      </div>
+    </div>
+
+    <div class="group" style="min-width:320px">
+      <label>Local image file (best for CORS issues)</label>
+      <input id="fileInput" type="file" accept="image/*" multiple />
+      <div class="row">
+        <button id="clear">Clear all</button>
+        <button id="pause">Pause</button>
+        <label class="row" style="gap:6px"><input type="checkbox" id="staticToggle"/> Static (no swim)</label>
+      </div>
+      <div class="row">
+        <label class="row" style="gap:6px"><input type="checkbox" id="useProxy" checked/> Auto CORS fix for URLs</label>
+        <button id="runTests">Run tests</button>
+      </div>
+      <small class="stat">Tip: You can also drag & drop images directly onto the aquarium.</small>
+      <div id="testOut" class="stat"></div>
+    </div>
+  </div>
+
+  <!-- Customize Fish tab -->
+  <div class="subpanel" id="tab-customize">
+
+    <div class="group" style="min-width:220px">
+  <label for="size">Fish size</label>
+  <select id="size">
+    <option value="5">Extra Small (5%)</option>
+    <option value="10">Small (10%)</option>
+    <option value="15" selected>Medium (15%)</option>
+    <option value="20">Large (20%)</option>
+    <option value="25">Extra Large (25%)</option>
+  </select>
+  <div class="row">
+    <button id="resizeAll">Resize all to selected size</button>
+    <button id="clearAllFish" class="danger">Clear all fish</button>
+  </div>
+  <small class="stat">Controls scale of newly added fish (5–25% of source image).</small>
+</div>
+  </div>
+
+  <!-- Feeding Menu tab -->
+  <div class="subpanel" id="tab-feeding">
+    <div class="group" style="min-width:280px">
+      <label>Feeding (click tank to drop food)</label>
+      <div class="row">
+        <label class="row" style="gap:6px"><input type="checkbox" id="feedingToggle" checked/> Enable feeding</label>
+        <button id="clearFood">Clear food</button>
+      </div>
+<label class="row" style="gap:6px"><input type="checkbox" id="showHunger"/> Show hunger meters</label>
+      <small class="stat">Game Mode: Each living fish drops a coin every 30–60s. Click coins before they hit the bottom to collect ($10/$20/$50/$500). Coins that reach the bottom vanish after 3s.</small>
+    </div>
+  </div>
+
+  <!-- Shop (overlay opener placeholder) -->
+  <!-- Secret Menu tab -->
+  <div class="subpanel" id="tab-secret">
+    <div class="group" style="min-width:280px">
+      <label>Secret goodies</label>
+      <div class="row">
+        <button class="primary" id="secretAddMoney">$10,000 Coins</button>
+      </div>
+      <small class="stat">Dev cheat: instantly add $10,000 to your money.</small>
+    </div>
+  </div>
+
+  <div class="subpanel" id="tab-shop" style="display:none"></div>
+</div>
+</div>
+
+<div id="stage">
+  <canvas id="bg"></canvas>
+  <canvas id="fish"></canvas>
+  <canvas id="crabLayer" style="position:absolute;inset:0;z-index:5;pointer-events:none;"></canvas>
+  <div class="hud">
+    <span class="pill">Fish: <strong id="count">0</strong></span>
+    <span class="pill">Food: <strong id="foodCount">0</strong></span>
+    <span class="pill">FPS: <strong id="fps">…</strong></span>
+    <span class="pill">Tip: paste your wallet address above to auto-load your Cryptofish!</span>
+  </div>
+
+  <div id="moneyHud" class="money-hud">Money: $<strong id="money">0</strong> <button id="shopBtn" class="shop-btn" title="Open Shop">Shop</button></div>
+</div>
+
+  <div class="shop-overlay" id="shopOverlay">
+    <div class="shop-backdrop" id="shopBackdrop"></div>
+    <div class="shop-card">
+      <button class="shop-close" id="shopClose">✕</button>
+      <header><h2>Shop</h2><span class="stat">(25 slots)</span></header>
+      <div class="shop-grid" id="shopGrid">
+        
+        <!-- Tile #1: Placeholder -->
+        <div class="shop-tile" id="tile-buyCryptofish">
+  <div class="title">Buy Cryptofish</div>
+  <div class="price" id="buyCryptofishPrice">$100</div>
+  <small class="stat" id="buyCryptofishStatus">Click to buy</small>
+</div>
+
+        <!-- Tile #2: Auto Feeder -->
+        <div class="shop-tile" id="tile-autoFeeder">
+          <svg class="pixel-sailboat" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <rect width="16" height="16" fill="none"/>
+            <rect x="7" y="3" width="1" height="8" fill="#895d3b"/>
+            <rect x="4" y="4" width="3" height="5" fill="#e6f1ff"/>
+            <rect x="8" y="6" width="4" height="3" fill="#c0d8ff"/>
+            <rect x="4" y="12" width="8" height="2" fill="#8b6239"/>
+            <rect x="3" y="11" width="10" height="1" fill="#cfa574"/>
+          </svg>
+          <div class="title">Auto Feeder</div>
+          <div class="price" id="autoFeederPrice">$500</div>
+          <small class="stat" id="autoFeederStatus">Not purchased</small>
+        </div>
+
+<div class="shop-tile" id="tile-seaweed">
+  <svg class="pixel-sailboat" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <!-- little kelp icon using blocks -->
+    <rect width="16" height="16" fill="none"/>
+    <rect x="3" y="6" width="2" height="7" fill="#2e7d32"/>
+    <rect x="6" y="4" width="2" height="9" fill="#1b5e20"/>
+    <rect x="9" y="5" width="2" height="8" fill="#43a047"/>
+    <rect x="12" y="7" width="1" height="6" fill="#66bb6a"/>
+  </svg>
+  <div class="title">Seaweed</div>
+  <div class="price" id="seaweedPrice">$100</div>
+  <small class="stat" id="seaweedStatus">Not purchased</small>
+</div>
+<div class="shop-tile" id="tile-crab">
+  <svg class="pixel-crab" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <!-- Simple pixel-art crab -->
+    <rect width="16" height="16" fill="none"/>
+    <!-- legs -->
+    <rect x="2" y="11" width="2" height="1" fill="#d35400"/>
+    <rect x="12" y="11" width="2" height="1" fill="#d35400"/>
+    <!-- claws -->
+    <rect x="0" y="7" width="3" height="2" fill="#e67e22"/>
+    <rect x="13" y="7" width="3" height="2" fill="#e67e22"/>
+    <!-- body -->
+    <rect x="3" y="7" width="10" height="5" fill="#e74c3c"/>
+    <rect x="4" y="6" width="8" height="2" fill="#e74c3c"/>
+    <!-- eyes -->
+    <rect x="5" y="6" width="1" height="1" fill="#ffffff"/>
+    <rect x="10" y="6" width="1" height="1" fill="#ffffff"/>
+  </svg>
+  <div class="title">Crab Collector</div>
+  <div class="price" id="crabPrice">$1000</div>
+  <small class="stat" id="crabStatus">Not purchased</small>
+</div>
+<div class="shop-tile locked"><div class="title">Slot 5</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 6</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 7</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 8</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 9</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 10</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 11</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 12</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 13</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 14</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 15</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 16</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 17</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 18</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 19</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 20</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 21</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 22</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 23</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 24</div><div class="price">Coming soon</div></div>
+<div class="shop-tile locked"><div class="title">Slot 25</div><div class="price">Coming soon</div></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+// === Auto Feeder Pricing & Tiers (updated per spec) ===
+window.AutoFeederConfig = {
+  basePrice: 500,
+  baseRate: { foodPerDrop: 1, intervalMs: 15000 },
+  tiers: [
+    { level: 1,  cost: 100,  foodPerDrop: 1, intervalMs: 12800 },
+    { level: 2,  cost: 150,  foodPerDrop: 1, intervalMs: 11400 },
+    { level: 3,  cost: 200,  foodPerDrop: 1, intervalMs: 10200 },
+    { level: 4,  cost: 250,  foodPerDrop: 1, intervalMs:  9300 },
+    { level: 5,  cost: 500,  foodPerDrop: 1, intervalMs:  8500 },
+    { level: 6,  cost: 750,  foodPerDrop: 1, intervalMs:  7400 },
+    { level: 7,  cost: 1000, foodPerDrop: 1, intervalMs:  5200 },
+    { level: 8,  cost: 1500, foodPerDrop: 1, intervalMs:  3700 },
+    { level: 9,  cost: 2000, foodPerDrop: 1, intervalMs:  2500 }
+  ]
+};
+
+// Enhanced Configuration with OpenSea API
+window.AquariumConfig = {
+  MAX_FISH: null, // Removed fish limit
+  TURN_CHANCE: 0.0008,
+  ERC721_ABI: ['function tokenURI(uint256 tokenId) view returns (string)'],
+  SKELETON_URL: 'https://www.shutterstock.com/image-vector/fish-skeleton-icon-8-bit-600nw-2248914709.jpg',
+  
+  // OpenSea API Configuration
+  OPENSEA_BASE_URL: 'https://api.opensea.io/api/v2',
+  CRYPTOFISH_CONTRACT: '0x9ef31ce8cca614e7aff3c1b883740e8d2728fe91',
+  
+  // Ethereum providers with fallback
+  ETHEREUM_PROVIDERS: [
+    'https://cloudflare-eth.com',
+    'https://eth-mainnet.public.blastapi.io',
+    'https://rpc.ankr.com/eth'
+  ],
+
+  // CDN fallbacks for ethers.js
+  ETHERS_CDNS: [
+    'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js',
+    'https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js'
+  ]
+};
+
+// Global Application State
+window.AquariumState = {
+  provider: null,
+  fishList: [],
+  paused: false,
+  lastTime: performance.now(),
+  fpsSmoothed: 60,
+  bgPixelSize: 10,
+  feedingEnabled: true,
+  mandatoryFeeding: true,
+  showHunger: false,
+  foods: [],
+  coins: [],
+  skeletonCanvas: null,
+  skeletonLoadPromise: null,
+  menuVisible: true,
+  bgCanvas: null,
+  fishCanvas: null,
+  bgCtx: null,
+  fishCtx: null,
+  
+  
+  seaweedLevel: 0,
+init() {
+    this.bgPixelSize = 10;
+    this.lastTime = performance.now();
+    this.fpsSmoothed = 60;
+  },
+  
+  setStatus(msg) {
+    const statusEl = document.getElementById('status');
+    if (statusEl) statusEl.textContent = msg;
+  },
+  
+  updateFoodCounter() {
+    const foodCountEl = document.getElementById('foodCount');
+    if (foodCountEl) foodCountEl.textContent = String(this.foods.length);
+  },
+  
+  updateFishCounter() {
+    const countEl = document.getElementById('count');
+    if (countEl) countEl.textContent = String(this.fishList.length);
+  }
+};
+
+// DOM Element References
+window.DOMElements = {
+  el: (id) => document.getElementById(id),
+  
+  init() {
+    this.panelEl = this.el('panel');
+    this.stageEl = this.el('stage');
+    this.menuFab = this.el('menuFab');
+    
+    this.toggleMenuBtn = this.el('toggleMenu');
+    this.fsBtn = this.el('fsBtn');
+    this.statusEl = this.el('status');
+    
+    this.walletAddress = this.el('walletAddress');
+    this.loadWalletFish = this.el('loadWalletFish');
+    this.clearWallet = this.el('clearWallet');
+    this.walletInfo = this.el('walletInfo');
+    
+    this.contractEl = this.el('contract');
+    this.idsEl = null; // Removed token IDs input
+    this.imgUrlEl = this.el('imgUrl');
+    this.fileInput = this.el('fileInput');
+    
+    this.useProxy = this.el('useProxy');
+    this.staticToggle = this.el('staticToggle');
+    this.feedingToggle = this.el('feedingToggle');
+    this.mandatoryFeedingToggle = this.el('mandatoryFeeding');
+    this.showHungerToggle = this.el('showHunger');
+    
+    this.threshEl = this.el('thresh');
+    this.pxEl = this.el('px');
+    this.spdEl = this.el('spd');
+    this.sizeEl = this.el('size');
+    this.foodSizeEl = this.el('foodSize');
+    
+    this.threshOut = this.el('threshOut');
+    this.pxOut = this.el('pxOut');
+    this.spdOut = this.el('spdOut');
+    this.sizeOut = this.el('sizeOut');
+    this.foodSizeOut = this.el('foodSizeOut');
+    
+    this.addByIdsBtn = null; // Removed NFT IDs button
+    this.addByUrlBtn = this.el('addByUrl');
+    this.clearBtn = this.el('clear');
+    this.pauseBtn = this.el('pause');
+    this.clearFoodBtn = this.el('clearFood');
+    this.shotBtn = this.el('shot');
+    this.runTestsBtn = this.el('runTests');
+    this.secretAddMoneyBtn = this.el("secretAddMoney");
+    this.resizeAllBtn = this.el('resizeAll');
+    
+    this.countEl = this.el('count');
+    this.foodCountEl = this.el('foodCount');
+    this.fpsEl = this.el('fps');
+    this.testOut = this.el('testOut');
+    
+    this.bgCanvas = this.el('bg');
+    this.fishCanvas = this.el('fish');
+    
+    if (this.bgCanvas && this.fishCanvas) {
+      window.AquariumState.bgCanvas = this.bgCanvas;
+      window.AquariumState.fishCanvas = this.fishCanvas;
+      window.AquariumState.bgCtx = this.bgCanvas.getContext('2d');
+      window.AquariumState.fishCtx = this.fishCanvas.getContext('2d');
+      window.AquariumState.fishCtx.imageSmoothingEnabled = false;
+    }
+  }
+};
+
+// Mathematical Utility Functions
+window.MathHelpers = {
+  clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  },
+  
+  lerp(a, b, t) {
+    return a + (b - a) * t;
+  },
+  
+  colorDist2(r1, g1, b1, r2, g2, b2) {
+    const dr = r1 - r2;
+    const dg = g1 - g2;
+    const db = b1 - b2;
+    return dr * dr + dg * dg + db * db;
+  },
+  
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  },
+  
+  now() {
+    return performance.now();
+  },
+  
+  randomBool() {
+    return Math.random() < 0.5;
+  },
+  
+  randomRange(min, max) {
+    return min + Math.random() * (max - min);
+  },
+  
+  randomInt(min, max) {
+    return Math.floor(this.randomRange(min, max + 1));
+  }
+};
+
+// Enhanced Image Processing with better CORS and cryptofish.us support
+window.ImageProcessing = {
+  resolveIPFS(url) {
+    if (!url) return url;
+    
+    // Handle ipfs://ipfs/ format
+    if (url.startsWith('ipfs://ipfs/')) {
+      return 'https://ipfs.io/' + url.slice('ipfs://'.length);
+    }
+    
+    // Handle standard ipfs:// format
+    if (url.startsWith('ipfs://')) {
+      return 'https://ipfs.io/ipfs/' + url.slice('ipfs://'.length);
+    }
+    
+    // Handle HTTP URLs that might be IPFS gateways or direct links
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // Handle bare hashes (assume IPFS)
+    if (url.match(/^Qm[1-9A-HJ-NP-Za-km-z]{44}$|^baf[a-z0-9]{56}$/)) {
+      return 'https://ipfs.io/ipfs/' + url;
+    }
+    
+    return url;
+  },
+
+  weservProxy(url) {
+    try {
+      const u = new URL(url);
+      const base = (u.protocol === 'https:' ? 'ssl:' : '') + u.host + u.pathname + u.search;
+      return 'https://images.weserv.nl/?url=' + base + '&n=-1';
+    } catch (e) {
+      return 'https://images.weserv.nl/?url=' + encodeURIComponent(url) + '&n=-1';
+    }
+  },
+
+  // Enhanced proxy URLs with more options for cryptofish.us
+  proxyUrls(url) {
+    const proxies = [];
+    
+    try {
+      const u = new URL(url);
+      const encodedUrl = encodeURIComponent(url);
+      
+      // Primary weserv proxy
+      proxies.push(`https://images.weserv.nl/?url=${u.protocol === 'https:' ? 'ssl:' : ''}${u.host}${u.pathname}${u.search}&n=-1`);
+      
+      // Alternative weserv
+      proxies.push(`https://wsrv.nl/?url=${encodedUrl}&n=-1`);
+      
+      // Additional CORS proxies specifically for cryptofish.us
+      if (url.includes('cryptofish.us')) {
+        proxies.push(`https://api.allorigins.win/raw?url=${encodedUrl}`);
+        proxies.push(`https://corsproxy.io/?${encodedUrl}`);
+        proxies.push(`https://cors-anywhere.herokuapp.com/${url}`);
+      }
+      
+      // Generic CORS proxies as fallback
+      proxies.push(`https://api.codetabs.com/v1/proxy/?quest=${encodedUrl}`);
+      
+    } catch (e) {
+      // Fallback if URL parsing fails
+      const encodedUrl = encodeURIComponent(url);
+      proxies.push(`https://images.weserv.nl/?url=${encodedUrl}&n=-1`);
+      proxies.push(`https://api.allorigins.win/raw?url=${encodedUrl}`);
+    }
+    
+    return proxies;
+  },
+
+  sampleBorderColor(imgData) {
+    const { data, width, height } = imgData;
+    const step = Math.max(1, Math.floor(Math.min(width, height) / 50));
+    const colorMap = new Map();
+
+    const pushPixel = (x, y) => {
+      const i = (y * width + x) * 4;
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+      colorMap.set(key, (colorMap.get(key) || 0) + 1);
+    };
+
+    for (let x = 0; x < width; x += step) {
+      pushPixel(x, 0);
+      pushPixel(x, height - 1);
+    }
+    for (let y = 0; y < height; y += step) {
+      pushPixel(0, y);
+      pushPixel(width - 1, y);
+    }
+
+    let bestKey = 0, bestCount = -1;
+    for (const [key, count] of colorMap) {
+      if (count > bestCount) {
+        bestKey = key;
+        bestCount = count;
+      }
+    }
+
+    const r = ((bestKey >> 10) & 31) << 3;
+    const g = ((bestKey >> 5) & 31) << 3;
+    const b = (bestKey & 31) << 3;
+    return [r, g, b];
+  },
+
+  floodFillAlpha(imgData, targetColor, threshold) {
+    const { data, width, height } = imgData;
+    const thr2 = threshold * threshold;
+    const visited = new Uint8Array(width * height);
+    const stack = [];
+
+    stack.push(0, width - 1, (height - 1) * width, (height - 1) * width + (width - 1));
+
+    while (stack.length) {
+      const idx = stack.pop();
+      if (visited[idx]) continue;
+      visited[idx] = 1;
+
+      const x = idx % width;
+      const y = (idx / width) | 0;
+      const i = idx * 4;
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+
+      if (window.MathHelpers.colorDist2(r, g, b, targetColor[0], targetColor[1], targetColor[2]) <= thr2) {
+        data[i + 3] = 0;
+
+        if (x > 0) stack.push(idx - 1);
+        if (x < width - 1) stack.push(idx + 1);
+        if (y > 0) stack.push(idx - width);
+        if (y < height - 1) stack.push(idx + width);
+      }
+    }
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const i = (y * width + x) * 4;
+        if (data[i + 3] === 0) continue;
+
+        let transparentNeighbors = 0;
+        const neighbors = [i - 4, i + 4, i - 4 * width, i + 4 * width];
+        for (const j of neighbors) {
+          if (data[j + 3] === 0) transparentNeighbors++;
+        }
+
+        if (transparentNeighbors >= 2) {
+          data[i + 3] = Math.min(data[i + 3], 180);
+        }
+      }
+    }
+  },
+
+  async loadImageAsCanvas(url, retryCount = 0) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas);
+        } catch (e) {
+          reject(new Error('Failed to draw image to canvas: ' + e.message));
+        }
+      };
+      
+      img.onerror = () => {
+        const errorMsg = retryCount > 0 
+          ? `Failed to load image after ${retryCount + 1} attempts: ${url}`
+          : `Failed to load image (CORS or 404): ${url}`;
+        reject(new Error(errorMsg));
+      };
+      
+      img.src = this.resolveIPFS(url);
+    });
+  },
+
+  async loadAndChromaKey(url, threshold) {
+    const canvas = await this.loadImageAsCanvas(url);
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const bgColor = this.sampleBorderColor(imgData);
+    this.floodFillAlpha(imgData, bgColor, threshold);
+    ctx.putImageData(imgData, 0, 0);
+    return canvas;
+  },
+
+  // Enhanced loading with better error handling and more proxy attempts
+  async tryLoadFishCanvas(url) {
+    const threshEl = window.DOMElements.threshEl;
+    const threshold = threshEl ? +threshEl.value : 36;
+    
+    // First try direct loading
+    try {
+      console.log('Attempting direct load:', url);
+      return await this.loadAndChromaKey(url, threshold);
+    } catch (directError) {
+      console.log('Direct load failed:', directError.message);
+      
+      // Check if CORS proxy is enabled
+      const useProxy = window.DOMElements.useProxy;
+      if (!useProxy || !useProxy.checked) {
+        throw directError;
+      }
+      
+      // Only try proxies for HTTP URLs
+      if (!/^https?:/i.test(url)) {
+        throw directError;
+      }
+      
+      // Try each proxy in sequence
+      const proxyUrls = this.proxyUrls(url);
+      let lastError = directError;
+      
+      for (let i = 0; i < proxyUrls.length; i++) {
+        const proxyUrl = proxyUrls[i];
+        try {
+          console.log(`Attempting proxy ${i + 1}/${proxyUrls.length}:`, proxyUrl);
+          const result = await this.loadAndChromaKey(proxyUrl, threshold);
+          console.log('✅ Proxy load successful!');
+          return result;
+        } catch (proxyError) {
+          console.log(`❌ Proxy ${i + 1} failed:`, proxyError.message);
+          lastError = proxyError;
+          
+          // Add delay between proxy attempts to avoid rate limiting
+          if (i < proxyUrls.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+      }
+      
+      // If all proxies failed, throw the last error with helpful message
+      throw new Error(`Failed to load image via ${proxyUrls.length} different proxies. Original URL: ${url}. Last error: ${lastError.message}`);
+    }
+  }
+};
+
+// Enhanced Blockchain Integration with OpenSea API
+window.BlockchainUtils = {
+  async ensureEthers() {
+    if (window.ethers) return window.ethers;
+    
+    const cdns = window.AquariumConfig.ETHERS_CDNS;
+    
+    for (const src of cdns) {
+      try {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+        
+        if (window.ethers) return window.ethers;
+      } catch (e) {
+        // Try next CDN
+      }
+    }
+    
+    throw new Error('Unable to load ethers.js from CDNs. Check your network/ad-blockers.');
+  },
+
+  async initProvider() {
+    const providers = window.AquariumConfig.ETHEREUM_PROVIDERS;
+    
+    for (const providerUrl of providers) {
+      try {
+        const provider = new window.ethers.providers.JsonRpcProvider(providerUrl);
+        // Reduce timeout and add retry logic
+        await Promise.race([
+          provider.getNetwork(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        window.AquariumState.provider = provider;
+        return provider;
+      } catch (e) {
+        console.warn(`Provider ${providerUrl} failed:`, e);
+      }
+    }
+    
+    console.warn('All Ethereum providers failed, continuing without blockchain integration');
+    return null; // Don't throw error, just continue without blockchain
+  },
+
+  async fetchImageUrlFromToken(contract, tokenId) {
+    const provider = window.AquariumState.provider;
+    if (!provider) throw new Error('No Ethereum provider available');
+    
+    const contractInstance = new window.ethers.Contract(
+      contract, 
+      window.AquariumConfig.ERC721_ABI, 
+      provider
+    );
+    
+    let uri = await contractInstance.tokenURI(tokenId);
+    
+    if (uri.startsWith('data:application/json')) {
+      const base64Data = uri.split(',')[1];
+      const metadata = JSON.parse(atob(base64Data));
+      return window.ImageProcessing.resolveIPFS(
+        metadata.image || metadata.image_url || metadata.imageUrl
+      );
+    } else {
+      const metadataUrl = window.ImageProcessing.resolveIPFS(uri);
+      const response = await fetch(metadataUrl, { mode: 'cors' });
+      const metadata = await response.json();
+      return window.ImageProcessing.resolveIPFS(
+        metadata.image || metadata.image_url || metadata.imageUrl
+      );
+    }
+  },
+
+  // Enhanced OpenSea API integration with better error handling
+  async fetchWalletNFTs(walletAddress, contractAddress) {
+    const config = window.AquariumConfig;
+    
+    try {
+      // Try OpenSea API v2 first
+      let url = `${config.OPENSEA_BASE_URL}/chain/ethereum/account/${walletAddress}/nfts?collection=${contractAddress}&limit=200`;
+      
+      let response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        // Try alternative OpenSea API format
+        url = `https://api.opensea.io/api/v1/assets?owner=${walletAddress}&asset_contract_address=${contractAddress}&limit=200`;
+        
+        response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`OpenSea API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return data.assets || [];
+      }
+
+      const data = await response.json();
+      return data.nfts || [];
+    } catch (error) {
+      console.error('OpenSea API failed:', error);
+      // Try alternative approach using public APIs
+      return this.fetchWalletNFTsAlternative(walletAddress, contractAddress);
+    }
+  },
+
+  // Alternative method using Alchemy or similar public APIs
+  async fetchWalletNFTsAlternative(walletAddress, contractAddress) {
+    try {
+      // Try Alchemy public API (no key required for basic queries)
+      const alchemyUrl = `https://eth-mainnet.alchemyapi.io/v2/demo/getNFTs?owner=${walletAddress}&contractAddresses[]=${contractAddress}`;
+      
+      const response = await fetch(alchemyUrl);
+      if (response.ok) {
+        const data = await response.json();
+        return data.ownedNfts || [];
+      }
+      
+      // If that fails, try a manual approach with known token ranges
+      return this.fetchWalletNFTsManual(walletAddress, contractAddress);
+    } catch (error) {
+      console.error('Alternative NFT fetch failed:', error);
+      throw new Error('Unable to fetch NFTs from wallet. Please try entering token IDs manually.');
+    }
+  },
+
+  // Manual approach for Cryptofish (since we know the collection)
+  async fetchWalletNFTsManual(walletAddress, contractAddress) {
+    // For demonstration, we'll suggest manual token ID entry
+    throw new Error('Automatic wallet loading currently unavailable. Please enter your Cryptofish token IDs manually in the "Token IDs" field below.');
+  }
+};
+
+// Background Rendering System
+window.BackgroundRenderer = {
+  state: {
+    time: 0,
+    bubbles: [],
+    plants: [],
+    px: 8,
+    w: 0,
+    h: 0
+  },
+
+  init() {
+    const st = window.AquariumState;
+    this.state.px = st.bgPixelSize;
+    this.onResize();
+  },
+
+  onResize() {
+    const st = window.AquariumState;
+    const { bgCanvas } = st;
+    if (!bgCanvas) return;
+
+    this.state.w = bgCanvas.width;
+    this.state.h = bgCanvas.height;
+    this.state.px = st.bgPixelSize;
+
+    this._generatePlants();
+    this._generateBubbles();
+    this.drawBackground();
+  },
+
+  setPixelSize(size) {
+    window.AquariumState.bgPixelSize = size;
+    this.onResize();
+  },
+
+  _generatePlants() {
+    
+    const level = (window.AquariumState && window.AquariumState.seaweedLevel) || 0;
+    const { w, h, px } = this.state;
+    if (level <= 0) { this.state.plants = []; return; }
+    // compute base plant count and scale by level (1 = base, 2 = double)
+    const baseCount = Math.max(4, (w / 260) | 0);
+    const plantCount = baseCount * level;
+
+    const plants = [];
+
+    for (let i = 0; i < plantCount; i++) {
+      const baseX = (i + 0.3) * (w / plantCount) + (Math.random() * 30 - 15);
+      const height = h * (0.25 + Math.random() * 0.25);
+      const color = {
+        r: (20 + Math.random() * 20) | 0,
+        g: (120 + Math.random() * 60) | 0,
+        b: (60 + Math.random() * 40) | 0
+      };
+      const phase = Math.random() * Math.PI * 2;
+
+      const segments = [];
+      for (let j = 0; j < height; j += px) segments.push(j);
+
+      plants.push({ baseX, height, color, phase, segments });
+    }
+
+    this.state.plants = plants;
+  },
+
+  _generateBubbles() {
+    const { w, h } = this.state;
+    const count = Math.max(8, Math.floor((w * h) / 15000));
+    const bubbles = [];
+
+    for (let i = 0; i < count; i++) {
+      bubbles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        speed: 0.25 + Math.random() * 0.35,
+        size: 1 + Math.floor(Math.random() * 3),
+        drift: (Math.random() * 0.2) + 0.05,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    this.state.bubbles = bubbles;
+  },
+
+  update(dt) {
+    const s = this.state;
+    const tscale = dt / 16.67;
+    s.time += dt;
+
+    for (const b of s.bubbles) {
+      b.y -= b.speed * tscale;
+      b.x += Math.sin(s.time * 0.001 + b.phase) * b.drift * tscale;
+
+      if (b.y < -b.size) {
+        b.y = s.h + b.size;
+        b.x = Math.random() * s.w;
+        b.speed = 0.25 + Math.random() * 0.35;
+        b.size = 1 + Math.floor(Math.random() * 3);
+        b.phase = Math.random() * Math.PI * 2;
+      }
+      if (b.x < 0) b.x = s.w - 1;
+      if (b.x >= s.w) b.x = 0;
+    }
+  },
+
+  drawBackground() {
+    const st = window.AquariumState;
+    const { bgCtx, bgCanvas } = st;
+    if (!bgCtx || !bgCanvas) return;
+
+    const { w, h, px, plants, time, bubbles } = this.state;
+
+    bgCtx.imageSmoothingEnabled = false;
+    for (let y = 0; y < h; y += px) {
+      const t = y / h;
+      const r = (10 + (10 * t)) | 0;
+      const g = (20 + (35 * t)) | 0;
+      const b = (60 + (140 * t)) | 0;
+      bgCtx.fillStyle = `rgb(${r},${g},${b})`;
+      for (let x = 0; x < w; x += px) {
+        bgCtx.fillRect(x, y, px, px);
+      }
+    }
+    // --- Sand layer at the bottom ---
+    const sandHeight = Math.floor(h * 0.08); // ~8% of tank height
+    for (let y = h - sandHeight; y < h; y += px) {
+      const t2 = (y - (h - sandHeight)) / sandHeight;
+      const r2 = 194 + Math.floor(t2 * 20);
+      const g2 = 178 + Math.floor(t2 * 15);
+      const b2 = 128 + Math.floor(t2 * 10);
+      bgCtx.fillStyle = `rgb(${r2},${g2},${b2})`;
+      for (let x = 0; x < w; x += px) {
+        bgCtx.fillRect(x, y, px, px);
+      }
+    }
+
+    for (let i = 0; i < plants.length; i++) {
+      const p = plants[i];
+      const col = `rgb(${p.color.r},${p.color.g},${p.color.b})`;
+      bgCtx.fillStyle = col;
+
+      const basePhase = p.phase + time * 0.0006;
+
+      for (const j of p.segments) {
+        const sway = Math.sin(basePhase + j * 0.045) * px * 0.5;
+        const x = (p.baseX + sway) | 0;
+        const y = (h - j) | 0;
+        if (y < 0) break;
+        bgCtx.fillRect(x, y, px, px);
+      }
+    }
+
+    bgCtx.fillStyle = 'rgba(255,255,255,0.5)';
+    for (const b of bubbles) {
+      bgCtx.fillRect(b.x | 0, b.y | 0, b.size, b.size);
+    }
+  }
+};
+
+// Canvas Management System
+window.CanvasManager = {
+  resize() {
+    const stageEl = window.DOMElements.stageEl;
+    const state = window.AquariumState;
+    
+    if (!stageEl || !state.bgCanvas || !state.fishCanvas) return;
+    
+    const rect = stageEl.getBoundingClientRect();
+    const width = rect.width | 0;
+    const height = rect.height | 0;
+    
+    [state.bgCanvas, state.fishCanvas].forEach(canvas => {
+      canvas.width = width;
+      canvas.height = height;
+    });
+    
+    window.BackgroundRenderer.onResize();
+  },
+
+  init() {
+    window.addEventListener('resize', () => this.resize());
+    setTimeout(() => this.resize(), 100);
+  },
+
+  clearFish() {
+    const { fishCtx, fishCanvas } = window.AquariumState;
+    if (fishCtx && fishCanvas) {
+      fishCtx.clearRect(0, 0, fishCanvas.width, fishCanvas.height);
+    }
+  },
+
+  exportPNG() {
+    const { bgCanvas, fishCanvas } = window.AquariumState;
+    if (!bgCanvas || !fishCanvas) return;
+    
+    const composite = document.createElement('canvas');
+    composite.width = bgCanvas.width;
+    composite.height = bgCanvas.height;
+    const ctx = composite.getContext('2d');
+    
+    ctx.drawImage(bgCanvas, 0, 0);
+    ctx.drawImage(fishCanvas, 0, 0);
+    
+    composite.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `aquarium-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+};
+
+// Color Tinting and Visual Effects
+window.TintingEffects = {
+  makeTintOverlay(sprite, width, height, rgba) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width | 0;
+    canvas.height = height | 0;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(sprite, 0, 0, width | 0, height | 0);
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = rgba;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'source-over';
+    
+    return canvas;
+  },
+
+  makeGrayscale(sprite, width, height) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width | 0;
+    canvas.height = height | 0;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = 'grayscale(100%)';
+    ctx.drawImage(sprite, 0, 0, width | 0, height | 0);
+    ctx.filter = 'none';
+    
+    return canvas;
+  },
+
+  makeTransparent(sprite, width, height, alpha) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width | 0;
+    canvas.height = height | 0;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(sprite, 0, 0, width | 0, height | 0);
+    ctx.globalAlpha = 1.0;
+    
+    return canvas;
+  },
+
+  createSkeletonFallback() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 24;
+    canvas.height = 12;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 5, 24, 2);
+    ctx.fillRect(3, 3, 2, 6);
+    ctx.fillRect(8, 3, 2, 6);
+    ctx.fillRect(13, 3, 2, 6);
+    ctx.fillRect(18, 3, 2, 6);
+    
+    return canvas;
+  }
+};
+
+// Fish Entity Class
+window.Fish = class Fish {
+  constructor(spriteCanvas, opts = {}) {
+    this.sprite = spriteCanvas;
+    
+    const scale = opts.scale || window.FishManager.getScale();
+    this.w = spriteCanvas.width * scale;
+    this.h = spriteCanvas.height * scale;
+    // Game Mode: start XS and schedule growth
+    const stGM = window.AquariumState || {};
+    const gameOn = !!stGM.mandatoryFeeding; // Game Mode uses mandatoryFeeding=true in this build
+    this.sizeTier = (gameOn ? 'XS' : (opts.sizeTier || 'M'));
+    if (gameOn){
+      const s = window.GameAging.scales[this.sizeTier] || 0.05;
+      this.w = spriteCanvas.width * s;
+      this.h = spriteCanvas.height * s;
+    }
+    this.nextGrowthAt = null;
+    if (gameOn){
+      const g = window.GameAging.growth[this.sizeTier] || [60_000,180_000];
+      this.nextGrowthAt = performance.now() + window.GameAging.randInRange(g[0], g[1]);
+    }
+
+    
+    const { fishCanvas } = window.AquariumState;
+    this.x = Math.random() * (fishCanvas.width - this.w);
+    this.y = Math.random() * (fishCanvas.height - this.h);
+    
+    this.baseSpeed = (opts.speed || window.FishManager.getSpeed()) / 60;
+    this._speedTimer = 0; this._nextSpeedChange = 5 + Math.random() * 10;const direction = window.MathHelpers.randomBool() ? -1 : 1;
+    this.vx = direction * (this.baseSpeed * (0.7 + Math.random() * 0.6));
+    this.vy = (Math.random() * 2 - 1) * this.baseSpeed * 0.5;
+    
+    this.phase = Math.random() * Math.PI * 2;
+    this.flip = this.vx < 0;
+    this.wobble = 12 + Math.random() * 28;
+    
+    this.stage = 1;
+    this.lastFedAt = window.MathHelpers.now();
+    this.stage2StartAt = null;
+    this.nextStage2At = this.lastFedAt + (60_000 + Math.random() * 240_000);
+    this.stage3StartAt = null;
+    this.stage4StartAt = null;
+    this.removeAt = null;
+  }
+
+  async enterStage3() {
+    if (this.stage >= 3) return;
+    
+    this.stage = 3;
+    this.stage3StartAt = window.MathHelpers.now();
+    this.vx = 0.15 * (window.MathHelpers.randomBool() ? -1 : 1);
+    this.vy = -0.25;
+  }
+
+  async enterStage4() {
+    if (this.stage >= 4) return;
+    
+    this.stage = 4;
+    this.stage4StartAt = window.MathHelpers.now();
+    
+    try {
+      const skeleton = await window.FishManager.getSkeleton();
+      this.sprite = skeleton;
+    } catch (e) {
+      console.warn('Failed to load skeleton:', e);
+    }
+    
+    this.vx = 0.1 * (window.MathHelpers.randomBool() ? -1 : 1);
+    this.vy = -0.12;
+    this.removeAt = this.stage4StartAt + 120_000;
+  }
+
+  feed() {
+    if (this.stage >= 3) return;
+    
+    this.stage = 1;
+    this.lastFedAt = window.MathHelpers.now();
+    this._cooldownUntil = this.lastFedAt + 5000;
+this.stage2StartAt = null;
+    this.nextStage2At = this.lastFedAt + (60_000 + Math.random() * 240_000);
+    this.stage3StartAt = null;
+    this.stage4StartAt = null;
+    this.removeAt = null;
+    /* GROWTH-ON-FEED */
+    try {
+      const st = window.AquariumState || {};
+      const gameOn = !!st.mandatoryFeeding;
+      if (gameOn && this.nextGrowthAt && performance.now() >= this.nextGrowthAt){
+        if (this.sizeTier === 'XS') this.growSize('S');
+        else if (this.sizeTier === 'S') this.growSize('M');
+        else if (this.sizeTier === 'M') this.growSize('L');
+        else if (this.sizeTier === 'L') this.growSize('XL');
+        // nextGrowthAt for the next tier is scheduled inside growSize()
+      }
+    } catch(e){}
+
+  }
+
+  update(dt, assignedFood) {
+    const staticToggle = window.DOMElements.staticToggle;
+    if (staticToggle && staticToggle.checked) return;
+    
+    const px = dt / 16.67;
+    
+    this.updateLifeStage(px);
+    this.updatePhysics(dt, px, assignedFood);
+  }
+
+  
+  growSize(next){
+    const s = window.GameAging.scales[next] || window.GameAging.scales[this.sizeTier] || (this.w/this.sprite.width);
+    const cx = this.x + this.w/2, cy = this.y + this.h/2;
+    this.sizeTier = next;
+    this.w = this.sprite.width * s;
+    this.h = this.sprite.height * s;
+    this.x = Math.max(0, cx - this.w/2);
+    this.y = Math.max(0, cy - this.h/2);
+    const g = window.GameAging.growth[next];
+    this.nextGrowthAt = g ? (performance.now() + window.GameAging.randInRange(g[0], g[1])) : null;
+  }
+
+updateLifeStage(px) {
+    const mandatoryFeeding = window.AquariumState.mandatoryFeeding;
+    if (!mandatoryFeeding) return;
+    
+    const now = window.MathHelpers.now();
+    
+    if (this.stage === 1 && now >= this.nextStage2At) {
+      this.stage = 2;
+      this.stage2StartAt = now;
+} else if (this.stage === 2 && now - this.stage2StartAt >= 60_000) {
+      this.enterStage3();
+    } else if (this.stage === 3 && now - this.stage3StartAt >= 60_000) {
+      this.enterStage4();
+    }
+    
+    if (this.stage === 4 && this.removeAt && now >= this.removeAt) {
+      this._remove = true;
+    }
+  }
+
+  updatePhysics(dt, px, assignedFood) {
+    if (this.stage === 4) {
+      this.updateSkeletonPhysics(px);
+    } else if (this.stage === 3) {
+      this.updateDeadPhysics(px);
+    } else {
+      this.updateLivingPhysics(dt, px, assignedFood);
+    }
+  }
+
+  updateSkeletonPhysics(px) {
+    this.y += this.vy * px;
+    this.x += this.vx * px;
+    this.phase += 0.01 * px;
+    
+    if (this.y <= 0) {
+      this.y = 0;
+      this.vy = Math.sin(this.phase) * 0.03;
+    }
+    
+    this.bounceOffWalls();
+  }
+
+  updateDeadPhysics(px) {
+    this.y += this.vy * px;
+    this.x += this.vx * px;
+    
+    if (this.y <= 0) {
+      this.y = 0;
+      this.phase += 0.01;
+      this.vy = Math.sin(this.phase) * 0.04;
+    }
+    
+    this.bounceOffWalls();
+  }
+
+  updateLivingPhysics(dt, px, assignedFood) {
+    
+    // Occasionally change swim speed for a natural feel (every ~5–15s)
+    this._speedTimer = (this._speedTimer || 0) + (dt / 1000);
+    if (this._speedTimer >= (this._nextSpeedChange || 8)) {
+      const newSpeed = (85 + Math.random() * 60) / 60; // px per frame base
+      const dir = (this.vx >= 0) ? 1 : -1;
+      this.baseSpeed = newSpeed;
+      this.vx = dir * (this.baseSpeed * (0.7 + Math.random() * 0.6));
+      this.vy = (Math.random() * 2 - 1) * this.baseSpeed * 0.5;
+      this._speedTimer = 0;
+      this._nextSpeedChange = 5 + Math.random() * 10;
+    }
+const feedingEnabled = window.AquariumState.feedingEnabled;
+    
+    if (feedingEnabled && assignedFood) {
+      this.updateFeedingBehavior(px, assignedFood);
+    } else {
+      this.updateRoamingBehavior(px);
+    }
+  }
+
+  updateFeedingBehavior(px, food) {
+      if (this._cooldownUntil && window.MathHelpers.now() < this._cooldownUntil) { this.updateRoamingBehavior(px); return; }
+const foodSize = food.size || 1;
+    const foodCenterX = food.x + foodSize / 2;
+    const foodCenterY = food.y + foodSize / 2;
+    const fishCenterX = this.x + this.w / 2;
+    const fishCenterY = this.y + this.h / 2;
+    
+    const dx = foodCenterX - fishCenterX;
+    const dy = foodCenterY - fishCenterY;
+    const distance = Math.max(0.0001, Math.hypot(dx, dy));
+    
+    const speedMul = (this.stage === 2 ? 1.10 : 1.05);
+    const step = this.baseSpeed * speedMul * px;
+    const targetVx = (dx / distance) * this.baseSpeed * 0.9;
+    
+    this.vx = window.MathHelpers.lerp(this.vx, targetVx, 0.15 * px);
+    this.x += (dx / distance) * step;
+    this.y += (dy / distance) * step;
+    
+    if (Math.abs(this.vx) > 0.001) {
+      this.flip = this.vx < 0;
+    } else {
+      this.flip = dx < 0;
+    }
+    
+    const eatRadius = Math.max(1.5, foodSize * 0.6);
+    if (distance < eatRadius) {
+      food._eaten = true;
+      this.feed();
+    }
+  }
+
+  updateRoamingBehavior(px) {
+    this.phase += 0.03 * px;
+    this.y += Math.sin(this.phase) * 0.4 * px + this.vy * px;
+    this.x += this.vx * px;
+    
+    if (Math.random() < window.AquariumConfig.TURN_CHANCE * px) {
+      this.vx = -this.vx;
+    }
+    
+    this.handleBoundaries();
+    
+    if (Math.random() < 0.01) {
+      this.vy += (Math.random() * 0.6 - 0.3);
+      this.vy = window.MathHelpers.clamp(this.vy, -2, 2);
+    }
+    
+    if (Math.abs(this.vx) > 0.001) {
+      this.flip = this.vx < 0;
+    }
+  }
+
+  handleBoundaries() {
+    const { fishCanvas } = window.AquariumState;
+    
+    if (this.x <= 0) {
+      this.x = 0;
+      this.vx = Math.abs(this.vx);
+    }
+    if (this.x + this.w >= fishCanvas.width) {
+      this.x = fishCanvas.width - this.w;
+      this.vx = -Math.abs(this.vx);
+    }
+    if (this.y <= 0) {
+      this.y = 0;
+      this.vy = Math.abs(this.vy);
+    }
+    if (this.y + this.h >= fishCanvas.height) {
+      this.y = fishCanvas.height - this.h;
+      this.vy = -Math.abs(this.vy);
+    }
+  }
+
+  bounceOffWalls() {
+    const { fishCanvas } = window.AquariumState;
+    
+    if (this.x <= 0) {
+      this.x = 0;
+      this.vx = Math.abs(this.vx);
+    }
+    if (this.x + this.w >= fishCanvas.width) {
+      this.x = fishCanvas.width - this.w;
+      this.vx = -Math.abs(this.vx);
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    
+    if (this.stage === 4) {
+      this.drawSkeleton(ctx);
+    } else if (this.stage === 3) {
+      this.drawDead(ctx);
+    } else {
+      this.drawLiving(ctx);
+    }
+    
+    ctx.restore();
+    
+    window.HungerSystem.drawHungerMeter(ctx, this);
+  }
+
+  drawSkeleton(ctx) {
+    ctx.translate((this.x | 0), (this.y | 0) + this.h);
+    ctx.scale(1, -1);
+    ctx.drawImage(this.sprite, 0, 0, this.w | 0, this.h | 0);
+  }
+
+  drawDead(ctx) {
+    ctx.translate((this.x | 0), (this.y | 0) + this.h);
+    ctx.scale(1, -1);
+    ctx.filter = 'grayscale(100%)';
+    ctx.drawImage(this.sprite, 0, 0, this.w | 0, this.h | 0);
+    ctx.filter = 'none';
+  }
+
+  drawLiving(ctx) {
+    ctx.translate((this.x | 0) + (this.flip ? this.w : 0), (this.y | 0));
+    ctx.scale(this.flip ? -1 : 1, 1);
+    ctx.drawImage(this.sprite, 0, 0, this.w | 0, this.h | 0);
+    
+    if (this.stage === 2) {
+      const tint = window.TintingEffects.makeTintOverlay(
+        this.sprite, 
+        this.w | 0, 
+        this.h | 0, 
+        'rgba(0,255,120,0.35)'
+      );
+      ctx.drawImage(tint, 0, 0);
+    }
+  }
+};
+
+// Enhanced Fish Management System with Wallet Integration
+window.FishManager = {
+  getScale() {
+    const sizeEl = window.DOMElements.sizeEl;
+    return sizeEl ? (+sizeEl.value) / 100 : 0.3;
+  },
+
+  getSpeed() { return 85 + Math.random() * 60; },
+
+  addFishFromCanvas(canvas, opts = {}) {
+    const state = window.AquariumState;
+
+    const fishOptions = {
+      speed: this.getSpeed(),
+      scale: opts.scale || this.getScale()
+    };
+    // Force XS size for Game Mode
+    try {
+      const st = window.AquariumState || {};
+      if (st.mandatoryFeeding) { fishOptions.scale = window.GameAging.scales.XS; }
+    } catch(e){}
+
+    const fish = new window.Fish(canvas, fishOptions);
+    state.fishList.push(fish);
+    state.updateFishCounter();
+    state.setStatus('ready');
+  },
+
+  async addFishFromUrl(url) {
+    const state = window.AquariumState;
+
+    state.setStatus('loading image…');
+    
+    try {
+      const canvas = await window.ImageProcessing.tryLoadFishCanvas(url);
+      this.addFishFromCanvas(canvas);
+    } catch (e) {
+      state.setStatus('error');
+      const message = (e && e.message) || String(e);
+      alert(`Could not load image URL.\n\n${message}\n\nFixes:\n• Toggle "Auto CORS fix for URLs".\n• Use an IPFS gateway that allows CORS (ipfs.io).\n• Or use "Local image file" or drag & drop a PNG.`);
+    }
+  },
+
+  // Removed addByTokenIds function since token ID input was removed
+
+  // New wallet integration function
+  async loadWalletFish() {
+    const state = window.AquariumState;
+    const walletAddress = window.DOMElements.walletAddress.value.trim();
+    const contractAddress = window.AquariumConfig.CRYPTOFISH_CONTRACT;
+    
+    if (!walletAddress) {
+      alert('Please enter your wallet address.');
+      return;
+    }
+    
+    if (!walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      alert('Please enter a valid Ethereum wallet address (0x).');
+      return;
+    }
+    
+    const walletInfo = window.DOMElements.walletInfo;
+    const loadButton = window.DOMElements.loadWalletFish;
+    
+    try {
+      // Show loading state
+      loadButton.classList.add('loading');
+      loadButton.textContent = 'Loading';
+      walletInfo.style.display = 'block';
+      walletInfo.innerHTML = '<div class="stat">🔍 Searching for your Cryptofish NFTs</div>';
+      
+      state.setStatus('fetching wallet NFTs…');
+      
+      // Fetch NFTs from OpenSea API
+      const nfts = await window.BlockchainUtils.fetchWalletNFTs(walletAddress, contractAddress);
+      
+      if (nfts.length === 0) {
+        walletInfo.innerHTML = '<div class="stat">No Cryptofish NFTs found in this wallet.</div>';
+        state.setStatus('ready');
+        return;
+      }
+      
+      walletInfo.innerHTML = `<div class="success">Found ${nfts.length} Cryptofish NFT${nfts.length === 1 ? '' : 's'}! Loading images</div>`;
+      
+      let loadedCount = 0;
+      let errorCount = 0;
+      
+      // Load each NFT's image
+      for (const nft of nfts) {
+        try {
+          // Extract image URL from NFT metadata
+          let imageUrl = nft.image_url;
+          
+          // If no direct image URL, try to get it from metadata
+          if (!imageUrl && nft.metadata && nft.metadata.image) {
+            imageUrl = nft.metadata.image;
+          }
+          
+          if (imageUrl) {
+            await this.addFishFromUrl(imageUrl);
+            loadedCount++;
+            
+            // Update progress
+            walletInfo.innerHTML = `<div class="success">Loading ${loadedCount}/${nfts.length} fish loaded</div>`;
+            
+            // Small delay to prevent overwhelming the system
+            await window.MathHelpers.sleep(100);
+          } else {
+            errorCount++;
+            console.warn('No image URL found for NFT:', nft);
+          }
+          
+        } catch (e) {
+          errorCount++;
+          console.warn('Failed to load NFT:', nft.identifier, e);
+        }
+      }
+      
+      // Final status
+      let finalMessage = `<div class="success">✅ Successfully loaded ${loadedCount} fish!`;
+      if (errorCount > 0) {
+        finalMessage += ` (${errorCount} failed to load)`;
+      }
+      finalMessage += '</div>';
+      
+      walletInfo.innerHTML = finalMessage;
+      state.setStatus('ready');
+      
+    } catch (error) {
+      console.error('Wallet loading failed:', error);
+      walletInfo.innerHTML = `<div class="error">❌ Failed to load wallet NFTs: ${error.message}</div>`;
+      state.setStatus('error');
+    } finally {
+      // Reset button state
+      loadButton.classList.remove('loading');
+      loadButton.textContent = 'Load My Fish';
+    }
+  },
+
+  async addFishFromFile(file) {
+    const state = window.AquariumState;
+
+    state.setStatus('processing file…');
+
+    try {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(bitmap, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const bgColor = window.ImageProcessing.sampleBorderColor(imgData);
+      
+      const threshEl = window.DOMElements.threshEl;
+      const threshold = threshEl ? +threshEl.value : 36;
+      
+      window.ImageProcessing.floodFillAlpha(imgData, bgColor, threshold);
+      ctx.putImageData(imgData, 0, 0);
+
+      this.addFishFromCanvas(canvas);
+    } catch (e) {
+      console.warn(e);
+      state.setStatus('error');
+      alert('Could not process file: ' + ((e && e.message) || e));
+    }
+  },
+
+  async handleFiles(files) {
+    for (const file of files) {
+      if (!file.type || !file.type.startsWith('image/')) continue;
+      await this.addFishFromFile(file);
+    }
+  },
+
+  clearAll() {
+    const state = window.AquariumState;
+    state.fishList.length = 0;
+    window.CanvasManager.clearFish();
+    state.updateFishCounter();
+  },
+
+  resizeAllToScale() {
+    const scale = this.getScale();
+    const state = window.AquariumState;
+    
+    for (const fish of state.fishList) {
+      fish.w = fish.sprite.width * scale;
+      fish.h = fish.sprite.height * scale;
+      
+      if (fish.x + fish.w > state.fishCanvas.width) {
+        fish.x = Math.max(0, state.fishCanvas.width - fish.w);
+      }
+      if (fish.y + fish.h > state.fishCanvas.height) {
+        fish.y = Math.max(0, state.fishCanvas.height - fish.h);
+      }
+    }
+  },
+
+  async getSkeleton() {
+    const state = window.AquariumState;
+    
+    if (state.skeletonCanvas) return state.skeletonCanvas;
+    if (state.skeletonLoadPromise) return state.skeletonLoadPromise;
+
+    const url = window.ImageProcessing.weservProxy(window.AquariumConfig.SKELETON_URL);
+    
+    state.skeletonLoadPromise = window.ImageProcessing.tryLoadFishCanvas(url)
+      .then(canvas => {
+        state.skeletonCanvas = canvas;
+        return canvas;
+      })
+      .catch(err => {
+        console.warn('Skeleton load failed, using fallback', err);
+        const fallback = window.TintingEffects.createSkeletonFallback();
+        state.skeletonCanvas = fallback;
+        return fallback;
+      });
+
+    return state.skeletonLoadPromise;
+  }
+};
+
+// Fish Physics and Animation Engine
+window.FishPhysics = {
+  updateAllFish(dt) {
+    const state = window.AquariumState;
+    
+    if (state.paused) return;
+
+    const foodAssignment = state.feedingEnabled && state.foods.length > 0 
+      ? window.FoodAssignment.assignFoodsToFishes(state.fishList, state.foods)
+      : new Map();
+
+    for (let i = 0; i < state.fishList.length; i++) {
+      const fish = state.fishList[i];
+      const assignedFood = foodAssignment.has(i) ? state.foods[foodAssignment.get(i)] : null;
+      fish.update(dt, assignedFood);
+    }
+
+    for (let i = state.fishList.length - 1; i >= 0; i--) {
+      if (state.fishList[i]._remove) {
+        state.fishList.splice(i, 1);
+      }
+    }
+
+    state.updateFishCounter();
+  },
+
+  renderAllFish(ctx) {
+    const state = window.AquariumState;
+    
+    for (const fish of state.fishList) {
+      fish.draw(ctx);
+    }
+  },
+
+  togglePause() {
+    const state = window.AquariumState;
+    const pauseBtn = window.DOMElements.pauseBtn;
+    
+    state.paused = !state.paused;
+    if (pauseBtn) {
+      pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+    }
+  },
+
+  calculateTimestep(currentTime) {
+    const state = window.AquariumState;
+    const dt = currentTime - state.lastTime;
+    state.lastTime = currentTime;
+    return dt;
+  },
+
+  updateFPS(dt) {
+    const fpsEl = window.DOMElements.fpsEl;
+    if (!fpsEl) return;
+    
+    const state = window.AquariumState;
+    const fps = 1000 / Math.max(1, dt);
+    state.fpsSmoothed = state.fpsSmoothed * 0.92 + fps * 0.08;
+    fpsEl.textContent = state.fpsSmoothed.toFixed(0);
+  }
+};
+
+// Food Management System
+window.FoodManager = {
+  addFood(x, y) {
+    const state = window.AquariumState;
+    
+    const size = 9;
+    
+    state.foods.push({
+      x: x,
+      y: y,
+      vy: 1,
+      size: size, landedAt: null, remove: false,
+      _eaten: false
+    });
+    
+    state.updateFoodCounter();
+  },
+
+  updateAllFood(dt) {
+    
+        const state = window.AquariumState;
+        const px = dt / 16.67;
+        const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+
+        for (const food of state.foods) {
+          const foodSize = food.size || 1;
+          if (food.landedAt == null) {
+            food.vy = 1.0;
+            food.y += food.vy * px;
+
+            const bottom = state.fishCanvas.height - foodSize;
+            if (food.y > bottom) {
+              food.y = bottom;
+              food.landedAt = now;
+            }
+          } else {
+            if (now - food.landedAt >= 3000) {
+              food.remove = true;
+            }
+          }
+        }
+
+        for (let i = state.foods.length - 1; i >= 0; i--) {
+          const f = state.foods[i];
+          if (f._eaten || f.remove) {
+            state.foods.splice(i, 1);
+          }
+        }
+
+        state.updateFoodCounter();
+        
+  },
+
+  renderAllFood(ctx) {
+    const state = window.AquariumState;
+    
+    for (const food of state.foods) {
+      this.renderFood(ctx, food);
+    }
+  },
+
+  renderFood(ctx, food) {
+    const size = food.size || 1;
+    const x = food.x | 0;
+    const y = food.y | 0;
+    
+    ctx.fillStyle = 'rgb(30,20,10)';
+    ctx.fillRect(x, y, size, size);
+    
+    if (size >= 3) {
+      ctx.fillStyle = 'rgb(90,70,50)';
+      ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+    }
+  },
+
+  clearAll() {
+    const state = window.AquariumState;
+    state.foods.length = 0;
+    state.updateFoodCounter();
+  },
+
+  getFoodSize() {
+    const foodSizeEl = window.DOMElements.foodSizeEl;
+    return foodSizeEl ? +foodSizeEl.value : 5;
+  },
+
+  handleStageClick(event) {
+    // Ignore clicks on UI so food doesn't spawn
+  var t = event.target;
+  if (t && (t.closest && (t.closest('#moneyHud') || t.closest('.shop-overlay') || t.closest('.wallet-info') || t.closest('.hud') || t.tagName === 'BUTTON'))){ return; }
+const state = window.AquariumState;
+  const rect = state.fishCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  // Try coin collection first (works even if feeding is disabled)
+  if (window.CoinManager && window.CoinManager.tryCollectAt(x, y)) {
+    return;
+  }
+
+  if (!state.feedingEnabled) return;
+  if (state.gameMode === true) {  const cur = (state.money|0);  if (cur <= 0) {    if (state.setStatus) state.setStatus("No money left for food");    return;  }  state.money = (cur - 1) | 0;  if (state.updateMoneyCounter) state.updateMoneyCounter();}this.addFood(x, y);
+}
+};
+
+// Hunger and Life Stage Management
+window.HungerSystem = {
+  getHungerProgress(fish) {
+    const state = window.AquariumState;
+    if (!state.mandatoryFeeding) return 0;
+    
+    const now = window.MathHelpers.now();
+    
+    if (fish.stage === 1) {
+      return window.MathHelpers.clamp(
+        (now - fish.lastFedAt) / Math.max(1, fish.nextStage2At - fish.lastFedAt),
+        0, 1
+      );
+    }
+    
+    if (fish.stage === 2) {
+      return window.MathHelpers.clamp(
+        (now - fish.stage2StartAt) / 60_000,
+        0, 1
+      );
+    }
+    
+    return 1;
+  },
+
+  drawHungerMeter(ctx, fish) {
+    const state = window.AquariumState;
+    if (!state.showHunger || fish.stage >= 3) return;
+    
+    const progress = this.getHungerProgress(fish);
+    const width = Math.max(20, Math.min(40, fish.w * 0.6));
+    const height = 3;
+    
+    let x = (fish.x | 0) + ((fish.w - width) / 2) | 0;
+    let y = (fish.y | 0) - height - 2;
+    if (y < 1) y = 1;
+    
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(x, y, width, height);
+    
+    const progressWidth = (width * progress) | 0;
+    const r = progress < 0.5 
+      ? 64 
+      : Math.floor(window.MathHelpers.lerp(64, 255, (progress - 0.5) / 0.5));
+    const g = progress < 0.5 
+      ? Math.floor(window.MathHelpers.lerp(255, 200, progress / 0.5))
+      : Math.floor(window.MathHelpers.lerp(200, 80, (progress - 0.5) / 0.5));
+    const b = 80;
+    
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(x, y, progressWidth, height);
+    
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, width - 1, height - 1);
+  },
+
+  resetAllToHealthy() {
+    const state = window.AquariumState;
+    
+    for (const fish of state.fishList) {
+      if (fish.stage < 3) {
+        fish.feed();
+      }
+    }
+  },
+
+  getHungryFishCount() {
+    const state = window.AquariumState;
+    if (!state.mandatoryFeeding) return 0;
+    
+    return state.fishList.filter(fish => fish.stage === 2).length;
+  },
+
+  getDyingFishCount() {
+    const state = window.AquariumState;
+    if (!state.mandatoryFeeding) return 0;
+    
+    return state.fishList.filter(fish => fish.stage >= 3).length;
+  },
+
+  getAquariumHealth() {
+    const state = window.AquariumState;
+    if (!state.mandatoryFeeding || state.fishList.length === 0) {
+      return { status: 'healthy', message: 'All fish are healthy' };
+    }
+    
+    const hungry = this.getHungryFishCount();
+    const dying = this.getDyingFishCount();
+    const total = state.fishList.length;
+    
+    if (dying > total * 0.5) {
+      return { status: 'critical', message: 'More than half the fish are dead or dying!' };
+    }
+    
+    if (hungry > total * 0.3) {
+      return { status: 'warning', message: 'Many fish are hungry and need food!' };
+    }
+    
+    if (hungry > 0 || dying > 0) {
+      return { status: 'caution', message: `${hungry} hungry, ${dying} dying` };
+    }
+    
+    return { status: 'healthy', message: 'All fish are well-fed' };
+  }
+};
+
+// Food-to-Fish Assignment Algorithm
+window.FoodAssignment = {
+  assignFoodsToFishes(fishes, foods) {
+    const now = window.MathHelpers.now();
+const chasers = fishes
+  .map((fish, index) => ({ fish, index }))
+  .filter(({ fish }) => fish.stage < 3 && !(fish._cooldownUntil && now < fish._cooldownUntil));
+const pairs = [];
+    
+    for (let foodIndex = 0; foodIndex < foods.length; foodIndex++) {
+      const food = foods[foodIndex];
+      const foodSize = food.size || 1;
+      const foodCenterX = food.x + foodSize / 2;
+      const foodCenterY = food.y + foodSize / 2;
+      
+      for (const { fish, index: fishIndex } of chasers) {
+        const fishCenterX = fish.x + fish.w / 2;
+        const fishCenterY = fish.y + fish.h / 2;
+        
+        const dx = foodCenterX - fishCenterX;
+        const dy = foodCenterY - fishCenterY;
+        let distanceSquared = dx * dx + dy * dy;
+// Hungry fish priority: weight distance to favor hungry fish
+if (fish.stage === 2) distanceSquared *= 0.25;
+        
+        pairs.push({
+          foodIndex,
+          fishIndex,
+          distanceSquared
+        });
+      }
+    }
+    
+    pairs.sort((a, b) => a.distanceSquared - b.distanceSquared);
+    
+    const assignedFoods = new Set();
+    const assignedFish = new Set();
+    const assignments = new Map();
+    
+    for (const pair of pairs) {
+      const { foodIndex, fishIndex } = pair;
+      
+      if (assignedFoods.has(foodIndex) || assignedFish.has(fishIndex)) {
+        continue;
+      }
+      
+      assignedFoods.add(foodIndex);
+      assignedFish.add(fishIndex);
+      assignments.set(fishIndex, foodIndex);
+      
+      if (assignedFoods.size === foods.length || assignedFish.size === chasers.length) {
+        break;
+      }
+    }
+    
+    return assignments;
+  },
+
+  getAssignmentStats(fishes, foods) {
+    const assignment = this.assignFoodsToFishes(fishes, foods);
+    const livingFish = fishes.filter(fish => fish.stage < 3);
+    
+    return {
+      totalFish: fishes.length,
+      livingFish: livingFish.length,
+      totalFood: foods.length,
+      assignments: assignment.size,
+      unassignedFish: livingFish.length - assignment.size,
+      unassignedFood: foods.length - assignment.size
+    };
+  },
+
+  debugRenderAssignments(ctx, fishes, foods) {
+    const assignment = this.assignFoodsToFishes(fishes, foods);
+    
+    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+    ctx.lineWidth = 2;
+    
+    for (const [fishIndex, foodIndex] of assignment) {
+      const fish = fishes[fishIndex];
+      const food = foods[foodIndex];
+      
+      if (!fish || !food) continue;
+      
+      const fishCenterX = fish.x + fish.w / 2;
+      const fishCenterY = fish.y + fish.h / 2;
+      const foodCenterX = food.x + (food.size || 1) / 2;
+      const foodCenterY = food.y + (food.size || 1) / 2;
+      
+      ctx.beginPath();
+      ctx.moveTo(fishCenterX, fishCenterY);
+      ctx.lineTo(foodCenterX, foodCenterY);
+      ctx.stroke();
+    }
+  }
+};
+
+// Fullscreen Management Utilities
+window.FullscreenManager = {
+  getFullscreenElement() {
+    return document.fullscreenElement || 
+           document.webkitFullscreenElement || 
+           document.mozFullScreenElement || 
+           document.msFullscreenElement;
+  },
+
+  isFullscreen() {
+    return !!this.getFullscreenElement();
+  },
+
+  setButtonLabel(isExiting) {
+    const fsBtn = window.DOMElements.fsBtn;
+    if (fsBtn) {
+      fsBtn.textContent = isExiting ? 'Exit Fullscreen' : 'Fullscreen';
+    }
+  },
+
+  updateUI() {
+    this.setButtonLabel(this.isFullscreen());
+  },
+
+  async enterFullscreen() {
+    const stageEl = window.DOMElements.stageEl;
+    if (!stageEl) return;
+
+    try {
+      if (stageEl.requestFullscreen) {
+        await stageEl.requestFullscreen({ navigationUI: 'hide' });
+      } else if (stageEl.webkitRequestFullscreen) {
+        stageEl.webkitRequestFullscreen();
+      } else if (stageEl.msRequestFullscreen) {
+        stageEl.msRequestFullscreen();
+      }
+    } catch (e) {
+      console.warn('Fullscreen request failed', e);
+    }
+  },
+
+  async exitFullscreen() {
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    } catch (e) {
+      console.warn('Exit fullscreen failed', e);
+    }
+  },
+
+  toggle() {
+    if (this.isFullscreen()) {
+      this.exitFullscreen();
+    } else {
+      this.enterFullscreen();
+    }
+  },
+
+  init() {
+    const events = [
+      'fullscreenchange',
+      'webkitfullscreenchange', 
+      'mozfullscreenchange',
+      'msfullscreenchange'
+    ];
+
+    events.forEach(event => {
+      document.addEventListener(event, () => {
+        this.updateUI();
+        window.CanvasManager.resize();
+      });
+    });
+
+    this.updateUI();
+  }
+};
+
+// Menu and Interface Controls
+window.MenuControls = {
+  setMenuVisible(visible) {
+    const state = window.AquariumState;
+    const dom = window.DOMElements;
+    
+    state.menuVisible = visible;
+    
+    if (dom.panelEl) {
+      dom.panelEl.style.display = visible ? '' : 'none';
+    }
+    
+    if (dom.menuFab) {
+      dom.menuFab.style.display = visible ? 'none' : 'block';
+    }
+    
+    if (dom.toggleMenuBtn) {
+      dom.toggleMenuBtn.textContent = visible ? 'Hide Menu' : 'Show Menu';
+    }
+  },
+
+  toggleMenu() {
+    this.setMenuVisible(!window.AquariumState.menuVisible);
+  },
+
+  initSliderOutputs() {
+    const dom = window.DOMElements;
+    
+    if (dom.threshEl && dom.threshOut) {
+      dom.threshOut.textContent = `(${dom.threshEl.value})`;
+    }
+    
+    if (dom.pxEl && dom.pxOut) {
+      dom.pxOut.textContent = `(${dom.pxEl.value})`;
+    }
+    
+    if (dom.spdEl && dom.spdOut) {
+      dom.spdOut.textContent = `(${dom.spdEl.value})`;
+    }
+    
+    if (dom.sizeEl && dom.sizeOut) {
+      dom.sizeOut.textContent = `(${dom.sizeEl.value}%)`;
+    }
+    
+    if (dom.foodSizeEl && dom.foodSizeOut) {
+      dom.foodSizeOut.textContent = `(${dom.foodSizeEl.value} px)`;
+    }
+  },
+
+  setupSliders() {
+    const dom = window.DOMElements;
+    
+    if (dom.pxEl && dom.pxOut) {
+      dom.pxEl.addEventListener('input', () => {
+        const value = +dom.pxEl.value;
+        dom.pxOut.textContent = `(${value})`;
+        window.BackgroundRenderer.setPixelSize(value);
+      });
+    }
+    
+    if (dom.threshEl && dom.threshOut) {
+      dom.threshEl.addEventListener('input', () => {
+        dom.threshOut.textContent = `(${dom.threshEl.value})`;
+      });
+    }
+    
+    if (dom.spdEl && dom.spdOut) {
+      dom.spdEl.addEventListener('input', () => {
+        dom.spdOut.textContent = `(${dom.spdEl.value})`;
+      });
+    }
+    
+    if (dom.sizeEl && dom.sizeOut) {
+      dom.sizeEl.addEventListener('input', () => {
+        dom.sizeOut.textContent = `(${dom.sizeEl.value}%)`;
+      });
+    }
+    
+    if (dom.foodSizeEl && dom.foodSizeOut) {
+      dom.foodSizeEl.addEventListener('input', () => {
+        dom.foodSizeOut.textContent = `(${dom.foodSizeEl.value} px)`;
+      });
+    }
+  },
+
+  setupActionButtons() {
+    const dom = window.DOMElements;
+    
+    // Removed NFT IDs button setup since it was removed
+    
+    if (dom.addByUrlBtn) {
+      dom.addByUrlBtn.addEventListener('click', () => {
+        const url = dom.imgUrlEl ? dom.imgUrlEl.value.trim() : '';
+        if (!url) {
+          alert('Paste an image URL first.');
+          return;
+        }
+        window.FishManager.addFishFromUrl(url);
+      });
+    }
+    
+    // New wallet controls
+    if (dom.loadWalletFish) {
+      dom.loadWalletFish.addEventListener('click', () => {
+        window.FishManager.loadWalletFish();
+      });
+    }
+    
+    if (dom.clearWallet) {
+      dom.clearWallet.addEventListener('click', () => {
+        dom.walletAddress.value = '';
+        dom.walletInfo.style.display = 'none';
+      });
+    }
+    
+    if (dom.clearBtn) {
+      dom.clearBtn.addEventListener('click', () => {
+        window.FishManager.clearAll();
+      });
+    }
+    
+    if (dom.pauseBtn) {
+      dom.pauseBtn.addEventListener('click', () => {
+        window.FishPhysics.togglePause();
+      });
+    }
+    
+    if (dom.resizeAllBtn) {
+      dom.resizeAllBtn.addEventListener('click', () => {
+        window.FishManager.resizeAllToScale();
+      });
+    }
+    
+    if (dom.shotBtn) {
+      dom.shotBtn.addEventListener('click', () => {
+        window.CanvasManager.exportPNG();
+      });
+    }
+    
+    if (dom.clearFoodBtn) {
+      dom.clearFoodBtn.addEventListener('click', () => {
+        window.FoodManager.clearAll();
+      });
+    }
+    
+    if (dom.toggleMenuBtn) {
+      dom.toggleMenuBtn.addEventListener('click', () => {
+        this.toggleMenu();
+      });
+    }
+    
+    if (dom.menuFab) {
+      dom.menuFab.addEventListener('click', () => {
+        this.setMenuVisible(true);
+      });
+    }
+    
+    if (dom.fsBtn) {
+      dom.fsBtn.addEventListener('click', () => {
+        window.FullscreenManager.toggle();
+      });
+    }
+  },
+
+  setupCheckboxes() {
+    const dom = window.DOMElements;
+    const state = window.AquariumState;
+    
+    if (dom.feedingToggle) {
+      dom.feedingToggle.addEventListener('change', () => {
+        state.feedingEnabled = dom.feedingToggle.checked;
+      });
+    }
+    
+    if (dom.mandatoryFeedingToggle) {
+      dom.mandatoryFeedingToggle.addEventListener('change', () => {
+        state.mandatoryFeeding = !dom.mandatoryFeedingToggle.checked;
+        state.gameMode = !dom.mandatoryFeedingToggle.checked;
+        if (state.gameMode && window.CoinManager) { window.CoinManager.ensureTimersForFish(performance.now()); }
+        
+        if (!state.mandatoryFeeding) {
+          window.HungerSystem.resetAllToHealthy();
+        }
+      });
+    }
+    
+    if (dom.showHungerToggle) {
+      dom.showHungerToggle.addEventListener('change', () => {
+        state.showHunger = dom.showHungerToggle.checked;
+      });
+    }
+  },
+
+  setupKeyboardShortcuts() {
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'm' || e.key === 'M') {
+        this.toggleMenu();
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        window.FullscreenManager.toggle();
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        window.FishPhysics.togglePause();
+      }
+    });
+  },
+
+  init() {
+    this.initSliderOutputs();
+    this.setupSliders();
+    this.setupActionButtons();
+    this.setupCheckboxes();
+    this.setupKeyboardShortcuts();
+  }
+};
+
+// File Upload and Drag-Drop Handlers
+window.FileHandlers = {
+  setupFileInput() {
+    const dom = window.DOMElements;
+    
+    if (dom.fileInput) {
+      dom.fileInput.addEventListener('change', () => {
+        if (dom.fileInput.files) {
+          window.FishManager.handleFiles(dom.fileInput.files);
+          dom.fileInput.value = '';
+        }
+      });
+    }
+  },
+
+  setupDragAndDrop() {
+    const dom = window.DOMElements;
+    
+    if (!dom.stageEl) return;
+    
+    dom.stageEl.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      dom.stageEl.style.filter = 'brightness(1.1)';
+    });
+    
+    dom.stageEl.addEventListener('dragleave', (e) => {
+      if (!dom.stageEl.contains(e.relatedTarget)) {
+        dom.stageEl.style.filter = '';
+      }
+    });
+    
+    dom.stageEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dom.stageEl.style.filter = '';
+      
+      if (e.dataTransfer && e.dataTransfer.files) {
+        window.FishManager.handleFiles(e.dataTransfer.files);
+      }
+    });
+  },
+
+  setupClickToFeed() {
+    const dom = window.DOMElements;
+    
+    if (dom.stageEl) {
+      dom.stageEl.addEventListener('click', (e) => {
+        window.FoodManager.handleStageClick(e);
+      });
+    }
+  },
+
+  setupPasteHandler() {
+    window.addEventListener('paste', async (e) => {
+      const clipboardData = e.clipboardData;
+      if (!clipboardData) return;
+      
+      const text = clipboardData.getData('text/plain');
+      if (text && this.isValidImageUrl(text)) {
+        const dom = window.DOMElements;
+        
+        if (dom.imgUrlEl) {
+          dom.imgUrlEl.value = text;
+          dom.imgUrlEl.focus();
+        }
+        
+        const shouldAdd = confirm(`Pasted image URL detected:\n${text}\n\nAdd fish automatically?`);
+        if (shouldAdd) {
+          window.FishManager.addFishFromUrl(text);
+        }
+      }
+      
+      const items = clipboardData.items;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            window.FishManager.addFishFromFile(file);
+            break;
+          }
+        }
+      }
+    });
+  },
+
+  isValidImageUrl(text) {
+    if (!text || typeof text !== 'string') return false;
+    
+    const urlPatterns = [
+      /^https?:\/\//i,
+      /^ipfs:\/\//i,
+      /^data:image\//i
+    ];
+    
+    const hasValidPattern = urlPatterns.some(pattern => pattern.test(text));
+    if (!hasValidPattern) return false;
+    
+    const imageIndicators = [
+      /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i,
+      /imgur\.com/i,
+      /ipfs\.io/i,
+      /gateway\./i,
+      /\.arweave\./i,
+      /opensea\.io.*\.png/i
+    ];
+    
+    return imageIndicators.some(indicator => indicator.test(text));
+  },
+
+  init() {
+    this.setupFileInput();
+    this.setupDragAndDrop();
+    this.setupClickToFeed();
+    this.setupPasteHandler();
+  }
+};
+
+// Global Event Management
+window.EventListeners = {
+  init() {
+    this.setupWindowEvents();
+    this.setupVisibilityChange();
+    this.setupErrorHandling();
+  },
+
+  setupWindowEvents() {
+    window.addEventListener('resize', () => {
+      window.CanvasManager.resize();
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      const state = window.AquariumState;
+      if (state.fishList.length > 0) {
+        e.preventDefault();
+        e.returnValue = 'You have fish in your aquarium. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    });
+
+    window.addEventListener('focus', () => {
+      if (window.AquariumState.paused) {
+        return;
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      // Keep running for feeding needs
+    });
+  },
+
+  setupVisibilityChange() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.onPageHidden();
+      } else {
+        this.onPageVisible();
+      }
+    });
+  },
+
+  onPageHidden() {
+    window.AquariumState.lastTime = performance.now();
+  },
+
+  onPageVisible() {
+    window.AquariumState.lastTime = performance.now();
+  },
+
+  setupErrorHandling() {
+    window.addEventListener('error', (e) => {
+      console.error('Global error:', e.error);
+      
+      if (e.error && e.error.message) {
+        const message = e.error.message;
+        
+        if (message.includes('ethers')) {
+          window.AquariumState.setStatus('Blockchain connection failed');
+        } else if (message.includes('canvas')) {
+          window.AquariumState.setStatus('Rendering error occurred');
+        } else if (message.includes('CORS')) {
+          window.AquariumState.setStatus('Image loading blocked by CORS');
+        } else {
+          window.AquariumState.setStatus('An error occurred');
+        }
+      }
+    });
+
+    window.addEventListener('unhandledrejection', (e) => {
+      console.error('Unhandled promise rejection:', e.reason);
+      e.preventDefault();
+      
+      if (e.reason && e.reason.message) {
+        const message = e.reason.message;
+        if (message.includes('fetch')) {
+          window.AquariumState.setStatus('Network request failed');
+        } else if (message.includes('CORS')) {
+          window.AquariumState.setStatus('Image blocked by CORS policy');
+        } else {
+          window.AquariumState.setStatus('Operation failed');
+        }
+      }
+    });
+  },
+
+  cleanup() {
+    // Cleanup function for removing listeners
+  }
+};
+
+// Main Application Entry Point
+window.AquariumApp = {
+  render(currentTime) {
+    const state = window.AquariumState;
+    
+    const dt = window.FishPhysics.calculateTimestep(currentTime);
+    window.FishPhysics.updateFPS(dt);
+    
+    window.BackgroundRenderer.update(dt);
+    window.BackgroundRenderer.drawBackground();
+    if (!state.paused) {
+      window.ShopManager && window.ShopManager.update(dt);
+      window.CoinManager && window.CoinManager.update(dt);
+      window.FoodManager.updateAllFood(dt);
+      window.FishPhysics.updateAllFish(dt);
+      
+    if (window.AutoFeeder && window.AutoFeeder.tick) window.AutoFeeder.tick(dt);
+window.CanvasManager.clearFish();
+      window.FoodManager.renderAllFood(state.fishCtx);
+      window.FishPhysics.renderAllFish(state.fishCtx);
+      window.CoinManager && window.CoinManager.renderAllCoins(state.fishCtx);
+    }
+    
+    requestAnimationFrame((time) => this.render(time));
+      if (window.AquariumState && window.AquariumState.updateMoneyCounter) window.AquariumState.updateMoneyCounter();
+},
+
+  async init() {
+    console.log('🐠 Initializing Enhanced Cryptofish Pixel Aquarium');
+    
+    try {
+      window.AquariumState.init();
+      window.DOMElements.init();
+      
+      
+      if (DOMElements.secretAddMoneyBtn) {
+        DOMElements.secretAddMoneyBtn.addEventListener("click", ()=>{
+          if (window.Money && window.Money.add) window.Money.add(10000);
+        });
+      }
+
+      if (window.AutoFeeder && window.AutoFeeder.hookShop) window.AutoFeeder.hookShop();
+window.CanvasManager.init();
+      window.BackgroundRenderer.init();
+      
+      window.MenuControls.init();
+      window.FileHandlers.init();
+      window.EventListeners.init();
+      window.FullscreenManager.init();
+      
+            window.ShopManager && window.ShopManager.init();
+      await this.initBlockchain();
+      
+      requestAnimationFrame((time) => this.render(time));
+      if (window.AquariumState && window.AquariumState.updateMoneyCounter) window.AquariumState.updateMoneyCounter();
+console.log('✅ Enhanced Aquarium initialized successfully!');
+      
+    } catch (error) {
+      console.error('❌ Failed to initialize aquarium:', error);
+      window.AquariumState.setStatus('Initialization failed');
+    }
+  },
+
+  async initBlockchain() {
+    try {
+      await window.BlockchainUtils.ensureEthers();
+      const provider = await window.BlockchainUtils.initProvider();
+      
+      if (provider) {
+        window.AquariumState.setStatus('ready');
+        console.log('🔗 Blockchain integration ready');
+      } else {
+        window.AquariumState.setStatus('ready (blockchain unavailable)');
+        console.log('⚠️ Continuing without blockchain integration');
+      }
+    } catch (error) {
+      console.warn('⚠️ Blockchain integration failed:', error);
+      window.AquariumState.setStatus('ready (blockchain unavailable)');
+    }
+  },
+
+  cleanup() {
+    window.EventListeners.cleanup();
+  }
+};
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.AquariumApp.init();
+  });
+} else {
+  window.AquariumApp.init();
+}
+  
+// === Auto Feeder System (updated) ===
+
+// === Auto Feeder System (unified & robust) ===
+window.AutoFeeder = (function(){
+  const st = window.AquariumState || {};
+  let purchased = false;
+  let level = 0; // 0=base
+  let lastDrop = performance.now();
+
+  function specFor(lvl){
+    if (!purchased) return null;
+    if (lvl === 0) return window.AutoFeederConfig.baseRate;
+    const t = window.AutoFeederConfig.tiers.find(t=>t.level===lvl);
+    return t || window.AutoFeederConfig.baseRate;
+  }
+  function nextTier(){
+    const nxt = level + 1;
+    return window.AutoFeederConfig.tiers.find(t=>t.level===nxt) || null;
+  }
+  function labelFor(lvl){ return (lvl >= 10) ? 'MAX' : String(lvl); }
+
+  function ensureHud(){
+    const priceEl = document.getElementById('autoFeederPrice');
+    const statusEl = document.getElementById('autoFeederStatus');
+    if (!purchased){
+      if (priceEl) priceEl.textContent = '$' + window.AutoFeederConfig.basePrice;
+      if (statusEl) statusEl.textContent = 'Not purchased';
+      return;
+    }
+    const s = specFor(level);
+    const secs = s.intervalMs/1000;
+    const secsTxt = (Math.round(secs*100)/100).toFixed(secs < 10 ? 2 : 1);
+    if (statusEl) statusEl.textContent = `Lv ${labelFor(level)} • ${s.foodPerDrop} food every ${secsTxt}s`;
+    const nxt = nextTier();
+    if (priceEl){
+      if (nxt) priceEl.textContent = 'Upgrade $' + nxt.cost;
+      else priceEl.textContent = 'MAX';
+    }
+  }
+
+  function spend(cost){
+    const st = window.AquariumState || {};
+    const amount = (cost|0);
+    let hud = null;
+    if (window.Money && window.Money.get){ try { hud = window.Money.get()|0; } catch(e){} }
+    const hasSt = (typeof st.money === 'number');
+    let cur = hasSt ? (st.money|0) : (hud !== null ? hud : 0);
+    if (cur >= amount){
+      const next = (cur - amount) | 0;
+      if (window.Money && window.Money.set){ try { window.Money.set(next); } catch(e){} }
+      if (hasSt){
+        st.money = next;
+        if (st.updateMoneyCounter) try { st.updateMoneyCounter(); } catch(e){}
+      }
+      return true;
+    }
+    return false;
+  }
+function buy(){
+    if (purchased) return false;
+    const price = window.AutoFeederConfig.basePrice|0;
+    if (!spend(price)){ alert('Not enough money for Auto Feeder ($'+price+').'); return false; }
+    purchased = true; level = 0; ensureHud(); return true;
+  }
+
+  function upgrade(){
+    if (!purchased){ alert('Buy Auto Feeder first.'); return false; }
+    const nxt = nextTier();
+    if (!nxt){ alert('Max level reached.'); return false; }
+    const cost = nxt.cost|0;
+    if (!spend(cost)){ alert('Not enough money for upgrade ($'+cost+').'); return false; }
+    level = nxt.level; ensureHud(); return true;
+  }
+
+  function tick(dt){
+    if (!purchased) return;
+    const s = specFor(level);
+    const now = performance.now();
+    if (now - lastDrop >= s.intervalMs && st.feedingEnabled){
+      const stageRect = window.DOMElements.stageEl.getBoundingClientRect();
+      const sweep = (stageRect.width * (0.5 + 0.45*Math.sin(now/1000)));
+      window.FoodManager.addFood(sweep, 0);
+      lastDrop = now;
+      if (st.updateFoodCounter) st.updateFoodCounter();
+    }
+  }
+
+  // No-op hook for backward compatibility with earlier init code
+  function hookShop(){ ensureHud(); }
+
+  return { buy, upgrade, tick, ensureHud, hookShop,
+           isPurchased: ()=>purchased, getLevel: ()=>level,
+           getNextTier: nextTier, getSpec: specFor };
+})();
+</script>
+<script>
+// === Game Mode Size/Aging constants ===
+window.GameAging = {
+  scales: { XS: 0.05, S: 0.10, M: 0.15, L: 0.20, XL: 0.25 },
+  growth: {
+    XS: [60_000, 180_000],
+    S:  [180_000, 300_000],
+    M:  [600_000, 900_000],
+    L:  [1_800_000, 2_100_000]
+  },
+  multiplier: { XS: 1, S: 1, M: 1, L: 2, XL: 5 },
+  allowedTiers: {
+    XS: ['bronze','silver'],
+    S:  ['bronze','silver','gold'],
+    M:  ['bronze','silver','gold','diamond'],
+    L:  ['bronze','silver','gold','diamond'],
+    XL: ['bronze','silver','gold','diamond']
+  },
+  randInRange(min, max){ return min + Math.random()*(max-min); }
+};
+</script>
+
+<script>
+(function() {
+  const panel = document.getElementById('panel');
+  const tabs = Array.from(document.querySelectorAll('.tab-link'));
+  const panels = { addFish: document.getElementById('tab-addFish'), customize: document.getElementById('tab-customize'), feeding: document.getElementById('tab-feeding'), shop: document.getElementById('tab-shop') , secret: document.getElementById('tab-secret') };
+  let activeId = 'addFish';
+
+  function setActive(id) {
+    tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    Object.keys(panels).forEach(key => {
+      panels[key].classList.toggle('active', key === id);
+    });
+    activeId = id;
+  }
+  function showPanel() {
+    if (!panel) return;
+    panel.style.display = '';
+    document.body.classList.remove('menu-hidden');
+  }
+  function hidePanel() {
+    if (!panel) return;
+    panel.style.display = 'none';
+    document.body.classList.add('menu-hidden');
+  }
+
+  // initial state
+  setActive(activeId);
+  showPanel();
+
+  // Click behavior:
+  // - Click a different tab: show panel (if hidden) and switch content + underline
+  // - Click the same tab while panel is visible: hide panel and remove underline
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.tab;
+      if (panel && panel.style.display !== 'none' && id === activeId) {
+        // minimize
+        hidePanel();
+        tabs.forEach(b => b.classList.remove('active'));
+        Object.values(panels).forEach(p => p.classList.remove('active'));
+        return;
+      }
+      // restore and activate
+      setActive(id);
+      showPanel();
+    });
+  });
+
+  // When panel is hidden, remove underline via CSS too (safety)
+  // CSS already handles body.menu-hidden .tab-link.active { border-bottom:0; opacity:.8; }
+})();
+</script>
+
+<script>
+// === Game Mode & Coins augmentation ===
+(function(){
+  // Safe init once
+  const st = window.AquariumState || (window.AquariumState = {});
+  if (!st.coins) st.coins = [];
+  if (typeof st.money !== "number") st.money = 100;
+  if (typeof st.gameMode !== 'boolean') st.gameMode = true;
+  if (typeof st.testMode !== 'boolean') st.testMode = false;
+  st.updateMoneyCounter = function(){
+    const el = document.getElementById('money');
+    if (el) el.textContent = String(this.money);
+  };
+
+  try { st.updateMoneyCounter(); } catch(e){}
+})();
+</script>
+
+<script>
+// === Coin Manager ===
+window.CoinManager = {
+  MAX_COINS: 150,
+  dropMinMs: 30000,
+  dropMaxMs: 60000,
+  gravityPxPerFrame: 1.0,
+  hitboxScale: 1.8,
+
+  pickTier(){
+    const r = Math.random()*100;
+    if (r < 70) return {value:10, size:30, kind:'circle', fill:'#cd7f32', stroke:'#7a4f1a'}; // bronze
+    if (r < 94) return {value:20, size:36, kind:'circle', fill:'#c0c0c0', stroke:'#7a7a7a'}; // silver
+    if (r < 99) return {value:50, size:44, kind:'circle', fill:'#ffd700', stroke:'#b28b00'}; // gold
+    return {value:500, size:52, kind:'diamond', fill:'#e6f7ff', stroke:'#bde3ff'}; // diamond
+  },
+  pickTierForFish(fish){
+    const base = this.pickTier();
+    const allowed = (fish && fish.sizeTier && window.GameAging && window.GameAging.allowedTiers)
+      ? window.GameAging.allowedTiers[fish.sizeTier]
+      : null;
+    if (!allowed) return base;
+    if (allowed.length >= 4) return base;
+    const priority = ['bronze','silver','gold','diamond'];
+    const baseKey = (base.kind === 'diamond') ? 'diamond' :
+                    (base.fill === '#ffd700' ? 'gold' :
+                     (base.fill === '#c0c0c0' ? 'silver' : 'bronze'));
+    let idx = priority.indexOf(baseKey);
+    while (idx >= 0 && !allowed.includes(priority[idx])) idx--;
+    const chosen = priority[Math.max(0, idx)];
+    if (chosen === 'bronze') return {value:10, size:30, kind:'circle', fill:'#cd7f32', stroke:'#7a4f1a'};
+    if (chosen === 'silver') return {value:20, size:36, kind:'circle', fill:'#c0c0c0', stroke:'#7a7a7a'};
+    if (chosen === 'gold') return {value:50, size:44, kind:'circle', fill:'#ffd700', stroke:'#b28b00'};
+    return {value:500, size:52, kind:'diamond', fill:'#e6f7ff', stroke:'#bde3ff'};
+  },
+
+  ensureTimersForFish(now){
+    const st = window.AquariumState;
+    for (const fish of st.fishList) {
+      if (!fish) continue;
+      if (fish.stage >= 3) continue;
+      if (fish._nextCoinAt == null) {
+        const wait = this.dropMinMs + Math.random()*(this.dropMaxMs - this.dropMinMs);
+        fish._nextCoinAt = now + wait;
+      }
+    }
+  },
+
+  spawnCoinFromFish(fish){
+    const st = window.AquariumState;
+    const tier = this.pickTierForFish(fish);
+    const mult = (fish && fish.sizeTier) ? (window.GameAging.multiplier[fish.sizeTier]||1) : 1;
+    const value = (tier.value|0) * mult;
+    const x = (fish.x + fish.w/2) | 0;
+    const y = (fish.y + fish.h) | 0;
+    st.coins.push({
+      x, y,
+      vy: 1.0,
+      size: tier.size,
+      value: value,
+      kind: tier.kind,
+      fill: tier.fill,
+      stroke: tier.stroke,
+      createdAt: performance.now(),
+      spin: (Math.random()*2-1)*0.02,
+      angle: 0,
+      landedAt: null,
+      remove: false
+    });
+  },
+
+  update(dt){
+    const st = window.AquariumState;
+    if (st.paused) return;
+    const now = performance.now();
+
+    if (st.gameMode) {
+      this.ensureTimersForFish(now);
+      for (const fish of st.fishList) {
+        if (!fish) continue;
+        if (fish.stage >= 3) continue;
+        if (fish._nextCoinAt != null && now >= fish._nextCoinAt) {
+          this.spawnCoinFromFish(fish);
+          const wait = this.dropMinMs + Math.random()*(this.dropMaxMs - this.dropMinMs);
+          fish._nextCoinAt = now + wait;
+        }
+      }
+    }
+
+    const px = dt / 16.67;
+    const bottom = st.fishCanvas ? (st.fishCanvas.height) : 0;
+    for (const c of st.coins) {
+      const s = Math.max(1, c.size|0);
+      if (c.landedAt == null) {
+        c.vy = this.gravityPxPerFrame;
+        c.y += c.vy * px;
+        c.angle += c.spin * px;
+        if (c.y + s >= bottom) {
+          c.y = Math.max(0, bottom - s);
+          c.landedAt = now;
+        }
+      } else {
+        if (now - c.landedAt >= 3000) {
+          c.remove = true;
+        }
+      }
+    }
+
+    for (let i = st.coins.length - 1; i >= 0; i--) {
+      if (st.coins[i].remove) st.coins.splice(i, 1);
+    }
+  },
+
+  tryCollectAt(x, y){
+    const st = window.AquariumState;
+    for (let i = st.coins.length - 1; i >= 0; i--) {
+      const c = st.coins[i];
+      const s = c.size|0;
+      const cx = c.x + s/2;
+      const cy = c.y + s/2;
+      let hit = false;
+      if (c.kind === 'circle') {
+        const dx = x - cx, dy = y - cy;
+        const r = (s/2) * (this.hitboxScale||1);
+        hit = (dx*dx + dy*dy) <= (r*r);
+      } else {
+        const pad = (s*((this.hitboxScale||1)-1))/2;hit = (x >= c.x - pad) && (x <= c.x + s + pad) && (y >= c.y - pad) && (y <= c.y + s + pad);
+      }
+      if (hit) {
+        st.money = (st.money || 0) + (c.value || 0);
+        st.updateMoneyCounter && st.updateMoneyCounter();
+        st.coins.splice(i, 1);
+        return true;
+      }
+    }
+    return false;
+  },
+
+  renderAllCoins(ctx){
+    const st = window.AquariumState;
+    const now = performance.now();
+    for (const c of st.coins) {
+      const s = c.size|0;
+      const x = c.x|0, y = c.y|0;
+      const t = (now - (c.createdAt||now)) / 1000;
+
+      const pulse = 0.75 + 0.25*Math.sin(t*4);
+
+      ctx.save();
+      ctx.translate(x + s/2, y + s/2);
+
+      if (c.kind === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, s/2, 0, Math.PI*2);
+        ctx.fillStyle = c.fill || '#fff';
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = c.stroke || 'rgba(0,0,0,0.4)';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, s/2 - 1, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.stroke();
+
+        ctx.rotate(c.angle || 0);
+        ctx.globalAlpha = 0.6 * pulse;
+        const r = s*0.15;
+        ctx.beginPath();
+        ctx.moveTo(0, -r*2);
+        ctx.lineTo(r, 0);
+        ctx.lineTo(0, r*2);
+        ctx.lineTo(-r, 0);
+        ctx.closePath();
+        ctx.fillStyle = 'white';
+        ctx.fill();
+      } else {
+        const r = s/2;
+        ctx.beginPath();
+        ctx.moveTo(0, -r);
+        ctx.lineTo(r, 0);
+        ctx.lineTo(0, r);
+        ctx.lineTo(-r, 0);
+        ctx.closePath();
+        ctx.fillStyle = c.fill || '#e6f7ff';
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = c.stroke || '#bde3ff';
+        ctx.stroke();
+
+        ctx.save();
+        ctx.rotate((c.angle||0) + t*1.2);
+        ctx.globalAlpha = 0.7 * pulse;
+        ctx.beginPath();
+        ctx.moveTo(-r*0.9, 0);
+        ctx.lineTo(r*0.9, 0);
+        ctx.moveTo(0, -r*0.9);
+        ctx.lineTo(0, r*0.9);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+  }
+};
+</script>
+
+<script>
+// === Test Mode UI injection ===
+(function(){
+  function ensureTestToggle(){
+    const st = window.AquariumState || (window.AquariumState = {});
+    const gmToggle = document.getElementById('mandatoryFeedingToggle') || document.querySelector('#mandatoryFeedingToggle');
+    if (!gmToggle) return; // controls not built yet
+    if (document.getElementById('testModeToggle')) return; // already added
+
+    // Find a good container to append to (parent label or its container)
+    const host = gmToggle.closest('.control-row,.menu-row,.toggle,.row') || gmToggle.parentElement || gmToggle;
+    const wrap = document.createElement('label');
+    wrap.className = (host.className || 'toggle') + ' test-mode-toggle';
+    wrap.style.display = 'flex';
+    wrap.style.alignItems = 'center';
+    wrap.style.gap = '8px';
+    wrap.style.marginTop = '6px';
+    wrap.innerHTML = '<input type="checkbox" id="testModeToggle" /> <span>Test Mode (fast coins)</span>';
+    host.parentElement.insertBefore(wrap, host.nextSibling);
+
+    const cb = wrap.querySelector('#testModeToggle');
+    cb.checked = !!st.testMode;
+    cb.addEventListener('change', () => {
+      st.testMode = cb.checked;
+      // Flip coin drop speeds
+      if (window.CoinManager) {
+        if (st.testMode) {
+          window.CoinManager.dropMinMs = 3000;
+          window.CoinManager.dropMaxMs = 6000;
+        } else {
+          window.CoinManager.dropMinMs = 30000;
+          window.CoinManager.dropMaxMs = 60000;
+        }
+        // Reschedule all fish drops to reflect new window
+        const now = performance.now();
+        if (st.fishList) {
+          for (const fish of st.fishList) {
+            if (!fish || fish.stage >= 3) continue;
+            const wait = window.CoinManager.dropMinMs + Math.random()*(window.CoinManager.dropMaxMs - window.CoinManager.dropMinMs);
+            fish._nextCoinAt = now + wait;
+          }
+        }
+      }
+    });
+  }
+  // Try immediately and also after DOM ready
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(ensureTestToggle, 0);
+  } else {
+    document.addEventListener('DOMContentLoaded', ensureTestToggle);
+  }
+})();
+</script>
+
+<script>
+// === Shop Manager (Auto Feeder) ===
+window.ShopManager = {
+  init() {
+    this.overlay = document.getElementById('shopOverlay');
+    this.backdrop = document.getElementById('shopBackdrop');
+    this.closeBtn = document.getElementById('shopClose');
+    this.grid = document.getElementById('shopGrid');
+    this.autoFeederTile = document.getElementById('tile-autoFeeder');
+    this.autoFeederPrice = document.getElementById('autoFeederPrice');
+    this.autoFeederStatus = document.getElementById('autoFeederStatus');
+    this.auto = {
+      purchased: false,
+      level: 0,
+      interval: 5000, // ms
+      timer: 0,
+      emitterX: 0,
+      dir: 1, // 1 right, -1 left
+      speed: 80 // px/s movement of emitter
+    };
+
+    // Tile click
+    this.autoFeederTile.addEventListener('click', () => {
+      if (!this.auto.purchased) this.buyAutoFeeder();
+      else this.upgradeAutoFeeder();
+    });
+
+    // Close controls
+    const close = () => this.close();
+    this.closeBtn.addEventListener('click', close);
+    this.backdrop.addEventListener('click', close);
+
+    // Hook into tab system to open overlay when "Shop" tab is selected.
+    const shopButton = Array.from(document.querySelectorAll('.tab-link'))
+      .find(b => b.dataset.tab === 'shop');
+    if (shopButton) {
+      shopButton.addEventListener('click', () => {
+        // Always open overlay and keep the side panel behavior as-is.
+        this.open();
+      });
+    }
+  
+    // Close overlay when any other tab is selected
+    const otherTabButtons = Array.from(document.querySelectorAll('.tab-link')).filter(b => b.dataset.tab !== 'shop');
+    otherTabButtons.forEach(b => b.addEventListener('click', () => { this.close(); }));
+  },
+
+  open() { this.overlay.classList.add('open'); },
+  close() { this.overlay.classList.remove('open'); },
+
+  buyAutoFeeder() {
+    const st = window.AquariumState;
+    const cost = 10;
+    if ((st.money|0) < cost) { this.flashStatus('Need $10'); return; }
+    st.money -= cost;
+    st.updateMoneyCounter && st.updateMoneyCounter();
+    this.auto.purchased = true;
+    this.auto.level = 0;
+    this.auto.interval = 5000;
+    this.auto.timer = 0;
+    this.autoFeederPrice.textContent = 'Upgrade $20';
+    this.autoFeederStatus.textContent = 'Active • 1 food / 5s';
+  },
+
+  upgradeAutoFeeder() {
+    const st = window.AquariumState;
+    const cost = 20;
+    if ((st.money|0) < cost) { this.flashStatus('Need $20'); return; }
+    st.money -= cost;
+    st.updateMoneyCounter && st.updateMoneyCounter();
+
+    // First upgrade -> 4s. Afterwards, multiply by 0.75 (25% faster) each upgrade.
+    if (this.auto.level === 0) {
+      this.auto.interval = 4000;
+    } else {
+      this.auto.interval = Math.max(250, Math.floor(this.auto.interval * 0.90));
+    }
+    this.auto.level++;
+    this.autoFeederStatus.textContent = `Active • 1 food / ${(this.auto.interval/1000).toFixed(2)}s`;
+  },
+
+  flashStatus(msg){
+    this.autoFeederStatus.textContent = msg;
+    setTimeout(() => {
+      const t = (this.auto.interval/1000).toFixed(2);
+      this.autoFeederStatus.textContent = this.auto.purchased ? `Active • 1 food / ${t}s` : 'Drops food automatically';
+    }, 900);
+  },
+
+  update(dt) {
+    if (!this.auto.purchased) return;
+    const st = window.AquariumState;
+    const stage = document.getElementById('stage');
+    if (!stage) return;
+
+    // Move emitter left<->right across the tank
+    const w = stage.clientWidth || 800;
+    const margin = 10;
+    this.auto.emitterX += this.auto.dir * this.auto.speed * (dt/1000);
+    if (this.auto.emitterX < margin) { this.auto.emitterX = margin; this.auto.dir = 1; }
+    if (this.auto.emitterX > w - margin) { this.auto.emitterX = w - margin; this.auto.dir = -1; }
+
+    // Drop timer
+    this.auto.timer += dt;
+    if (this.auto.timer >= this.auto.interval) {
+      this.auto.timer = 0;
+      const x = this.auto.emitterX;
+      // Drop from top
+      window.FoodManager.addFood(x, 0);
+    }
+  }
+};
+</script>
+
+<script>
+(function(){
+  function bindSecret(){
+    var btn = document.getElementById('secretAddMoney');
+    if(!btn) return;
+    btn.addEventListener('click', function(){
+      // Add $10,000 to both systems
+      try { if (window.Money && window.Money.add) window.Money.add(10000); } catch(e){}
+      try {
+        var st = window.AquariumState || {};
+        st.money = ((st.money|0) + 10000) | 0;
+        if (st.updateMoneyCounter) st.updateMoneyCounter();
+      } catch(e){}
+      // Flash the money HUD so it's obvious
+      var hud = document.getElementById('moneyHud');
+      if (hud){
+        hud.classList.add('success-flash');
+        setTimeout(function(){ hud.classList.remove('success-flash'); }, 400);
+      }
+    });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bindSecret);
+  } else {
+    bindSecret();
+  }
+})();
+</script>
+
+<script>
+
+// === Shop Tile Binding for Auto Feeder ===
+(function(){
+  const tile = document.getElementById('tile-autoFeeder');
+  if (!tile) return;
+  const priceEl = document.getElementById('autoFeederPrice');
+  const statusEl = document.getElementById('autoFeederStatus');
+
+  function previewText(){
+    if (!window.AutoFeeder || !window.AutoFeeder.isPurchased || !window.AutoFeeder.getNextTier) return '';
+    if (!window.AutoFeeder.isPurchased()){
+      const s = window.AutoFeederConfig.baseRate;
+      const secs=(s.intervalMs/1000); const secsTxt=(Math.round(secs*100)/100).toFixed(1);
+      return `Buy: $${window.AutoFeederConfig.basePrice} → ${s.foodPerDrop}/`+secsTxt+'s';
+    }
+    const nxt = window.AutoFeeder.getNextTier();
+    if (!nxt) return 'Maxed';
+    const secs=(nxt.intervalMs/1000); const secsTxt=(Math.round(secs*100)/100).toFixed(2);
+    return `Next: $${nxt.cost} → ${nxt.foodPerDrop}/`+secsTxt+'s';
+  }
+
+  function updateHover(){
+    tile.setAttribute('title', previewText());
+  }
+
+  function updateTile(){
+    if (window.AutoFeeder && window.AutoFeeder.ensureHud) window.AutoFeeder.ensureHud();
+    updateHover();
+  }
+
+  // Primary click handler (stop other old handlers)
+  tile.addEventListener('click', function(ev){
+    ev.stopImmediatePropagation();
+    if (!window.AutoFeeder) return;
+    if (!window.AutoFeeder.isPurchased()) window.AutoFeeder.buy();
+    else window.AutoFeeder.upgrade();
+    updateTile();
+  });
+
+  tile.addEventListener('mouseenter', updateHover);
+  tile.addEventListener('mousemove', updateHover);
+
+  // Initial paint
+  if (window.AutoFeeder && window.AutoFeeder.ensureHud) window.AutoFeeder.ensureHud();
+  updateHover();
+})();
+
+</script>
+<!-- Secret Menu opener (green dot) -->
+<script>
+(function(){
+  function ready(fn){ if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  function openSecretPanel(){
+    var panel = document.getElementById('panel');
+    var all = document.querySelectorAll('.subpanel');
+    for (var i=0;i<all.length;i++){ all[i].classList.remove('active'); }
+    var secret = document.getElementById('tab-secret');
+    if (secret){ secret.classList.add('active'); }
+    var tabs = document.querySelectorAll('.tab-link');
+    for (var j=0;j<tabs.length;j++){ tabs[j].classList.remove('active'); }
+    if (panel){ panel.style.display = ''; }
+    document.body.classList.remove('menu-hidden');
+  }
+  ready(function(){
+    var dot = document.getElementById('secretDot') || document.querySelector('header .dot');
+    if (!dot) return;
+    dot.addEventListener('click', openSecretPanel);
+  });
+})();
+</script>
+<!-- Random Cryptofish Feature (auto-injected) -->
+<script>
+(function(){
+  function ready(fn){ if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  function status(msg){ try{ window.AquariumState && window.AquariumState.setStatus && window.AquariumState.setStatus(msg); }catch(e){} }
+  function ipfsToHttp(url){
+    try {
+      if (!url) return url;
+      if (url.startsWith('ipfs://ipfs/')) return 'https://ipfs.io/' + url.replace('ipfs://', '');
+      if (url.startsWith('ipfs://')) return 'https://ipfs.io/ipfs/' + url.slice('ipfs://'.length);
+      return url;
+    } catch(e){ return url; }
+  }
+  async function fetchText(u){ try{ const r=await fetch(u); if(!r.ok) return null; return await r.text(); }catch(_){ return null; } }
+  async function fetchJSON(u){ try{ const r=await fetch(u); if(!r.ok) return null; return await r.json(); }catch(_){ return null; } }
+
+  async function fetchMetaText(id){
+    const raw = `https://cryptofish.us/metadata/${id}.json`;
+    const candidates = [
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(raw)}`,
+      `https://r.jina.ai/http://cryptofish.us/metadata/${id}.json`,
+      `https://cors.isomorphic-git.org/${raw}`,
+      raw
+    ];
+    for (const u of candidates){
+      const t = await fetchText(u);
+      if (t) return t;
+    }
+    return null;
+  }
+
+  function findPngInText(text){
+    let m = text.match(/https?:\/\/[^"\s'<>()]+\.png(\?[^"\s'<>()]+)?/i);
+    if (!m){ m = text.match(/ipfs:\/\/[^"\s'<>()]+\.png(\?[^"\s'<>()]+)?/i); }
+    return m ? ipfsToHttp(m[0]) : null;
+  }
+
+  async function getRandomCryptofishPng(){
+    const min=1, max=2100;
+    for (let attempts=0; attempts<16; attempts++){
+      const id = (window.MathHelpers && typeof window.MathHelpers.randomInt === 'function')
+        ? window.MathHelpers.randomInt(min, max)
+        : Math.floor(min + Math.random() * (max - min + 1));
+      const text = await fetchMetaText(id);
+      if (!text) continue;
+      const url = findPngInText(text);
+      if (url) return { id, url };
+    }
+    try {
+      const offset = Math.floor(Math.random()*2000);
+      const headers = {};
+      const json = await fetchJSON(`https://api.opensea.io/api/v1/assets?collection_slug=cryptofish&limit=1&offset=${offset}`);
+      const asset = json && json.assets && json.assets[0];
+      const img = asset && (asset.image_url || asset.image_original_url || asset.image_preview_url);
+      if (img) return { id: 'opensea', url: img };
+    } catch(_){}
+    throw new Error('No image found across multiple sources.');
+  }
+
+  function setBtnState(btn, txt, disabled){
+    if (!btn) return;
+    btn.textContent = txt;
+    btn.disabled = !!disabled;
+  }
+
+  function addFishViaUrl(imageUrl){
+    if (window.FishManager && typeof window.FishManager.addFishFromUrl === 'function') {
+      return window.FishManager.addFishFromUrl(imageUrl);
+    } else if (window.addFishFromUrl) {
+      return window.addFishFromUrl(imageUrl);
+    }
+    throw new Error('FishManager.addFishFromUrl not found');
+  }
+
+  function onClickRandom(btn){
+    return async function(){
+      try {
+        status('fetching cryptofish metadata…');
+        setBtnState(btn, 'Finding…', true);
+        const { id, url } = await getRandomCryptofishPng();
+        await addFishViaUrl(url);
+        status('added cryptofish #' + id);
+      } catch(e){
+        status('error');
+        alert('Could not add a random Cryptofish.\n\n' + (e && e.message ? e.message : e));
+      } finally {
+        setBtnState(btn, '🎲 Add Random Cryptofish', false);
+      }
+    };
+  }
+
+  ready(function(){
+    // Event delegation to survive re-renders
+    document.addEventListener('click', function(ev){
+      const btn = ev.target && (ev.target.id === 'addRandomCryptofish'
+                  ? ev.target
+                  : (ev.target.closest && ev.target.closest('#addRandomCryptofish')));
+      if (!btn) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      onClickRandom(btn)();
+    }, true);
+    // Mark ready
+    const b = document.getElementById('addRandomCryptofish');
+    if (b) b.title = 'Ready — click to add a random Cryptofish';
+    try{ console.log('[randomCryptofish] ready'); }catch(_){}
+  });
+})();
+</script>
+<script>
+
+// === Shop UI helpers ===
+window.ShopUI = (function(){
+  const overlay = document.getElementById('shopOverlay');
+  const backdrop = document.getElementById('shopBackdrop');
+  const closeBtn = document.getElementById('shopClose');
+  const shopTab = document.querySelector('.tab-link[data-tab="shop"]');
+
+  function open(){ if (overlay) overlay.classList.add('open'); }
+  function close(){ if (overlay) overlay.classList.remove('open'); }
+
+  if (shopTab) {
+    shopTab.addEventListener('click', (e)=>{
+      e.preventDefault();
+      open();
+    });
+  }
+  if (backdrop) backdrop.addEventListener('click', close);
+  if (closeBtn) closeBtn.addEventListener('click', close);
+
+  return { open, close };
+})();
+
+// === Seaweed shop logic (Slot 3) ===
+window.SeaweedShop = (function(){
+  const tile = document.getElementById('tile-seaweed');
+  const priceEl = document.getElementById('seaweedPrice');
+  const statusEl = document.getElementById('seaweedStatus');
+
+  const BASE_PRICE = 100;
+  const UPGRADE_PRICE = 100;
+  const MAX_LEVEL = 2; // 0=none, 1=base, 2=double
+  // Use the same money path as AutoFeeder: prefer AquariumState.money, then update HUD.
+  function spendSame(cost){
+    const st = window.AquariumState || {};
+    const amount = (cost|0);
+    const hasSt = (typeof st.money === 'number');
+    let cur = hasSt ? (st.money|0) : (window.Money && window.Money.get ? (window.Money.get()|0) : 0);
+    if (cur >= amount){
+      const next = (cur - amount) | 0;
+      if (hasSt){
+        st.money = next;
+        if (st.updateMoneyCounter) { try { st.updateMoneyCounter(); } catch(e){} }
+      }
+      if (window.Money && window.Money.set) { try { window.Money.set(next); } catch(e){} }
+      return true;
+    }
+    return false;
+  }
+
+  function refreshStatus(){
+    const lvl = window.AquariumState.seaweedLevel || 0;
+    if (lvl <= 0){
+      if (priceEl) priceEl.textContent = `$${BASE_PRICE}`;
+      if (statusEl) statusEl.textContent = 'Not purchased';
+    } else if (lvl === 1){
+      if (priceEl) priceEl.textContent = `$${UPGRADE_PRICE}`;
+      if (statusEl) statusEl.textContent = 'Purchased (upgrade available)';
+    } else {
+      if (priceEl) priceEl.textContent = '—';
+      if (statusEl) statusEl.textContent = 'Maxed';
+    }
+  }
+
+  function applyPlants(){
+    // Re-generate background plants according to new level
+    if (window.BackgroundRenderer) {
+      window.BackgroundRenderer._generatePlants();
+      window.BackgroundRenderer.drawBackground();
+    }
+  }
+
+  function flashSuccess(){
+    if (!tile) return;
+    tile.classList.add('success-flash');
+    setTimeout(()=> tile.classList.remove('success-flash'), 600);
+  }
+
+  function onClick(){
+    const lvl = window.AquariumState.seaweedLevel || 0;
+    if (lvl <= 0){
+      // Buy level 1
+      if (spendSame(BASE_PRICE)){
+        window.AquariumState.seaweedLevel = 1;
+        refreshStatus();
+        applyPlants();
+        flashSuccess();
+      } else {
+        // insufficient funds
+      }
+    } else if (lvl === 1){
+      // Upgrade to level 2 (double plants)
+      if (spendSame(UPGRADE_PRICE)){
+        window.AquariumState.seaweedLevel = 2;
+        refreshStatus();
+        applyPlants();
+        flashSuccess();
+      } else {
+        // insufficient funds
+      }
+    } else {
+      // already maxed
+    }
+  }
+
+  if (tile) tile.addEventListener('click', onClick);
+  refreshStatus();
+
+  return { refreshStatus, onClick };
+})();
+
+</script>
+
+<script>
+// Hook Shop button next to money HUD to open overlay without spawning food
+(function(){
+  function wireShopBtn(){
+    var btn = document.getElementById('shopBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if (window.ShopUI && typeof window.ShopUI.open === 'function') {
+        window.ShopUI.open();
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireShopBtn);
+  } else {
+    wireShopBtn();
+  }
+})();
+</script>
+
+<!-- === Mode Selection Popup (shown on load) === -->
+<div id="modeOverlay" class="mode-overlay" style="display:flex">
+  <div class="mode-card">
+    <header>
+      <h2>Select a Mode</h2>
+    </header>
+    <div class="mode-grid">
+      <div class="mode-opt">
+        <h3>Game Mode</h3>
+        <p>This mode is a survival based gamemode where you will have to feed and protect your CryptoFish to keep safe.</p>
+        <div class="mode-actions">
+          <button id="chooseGame" class="mode-btn primary">Start Game Mode</button>
+        </div>
+      </div>
+      <div class="mode-opt">
+        <h3>Peaceful Mode</h3>
+        <p>This mode is a peaceful experiece for those who want to admire CryptoFish while having access to all settings.</p>
+        <div class="mode-actions">
+          <button id="choosePeaceful" class="mode-btn">Start Peaceful Mode</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Simple mode manager
+  window.ModeManager = {
+    mode: null, // 'game' | 'peaceful'
+    setMode(next){
+      this.mode = next;
+      document.body.classList.toggle('game-mode', next === 'game');
+      // Update fish limit
+      if (next === 'game') {
+        window.AquariumConfig = window.AquariumConfig || {};
+        window.AquariumConfig.MAX_FISH = 20;
+        // Spawn one random fish like the button does
+        const trySpawn = () => {
+          const btn = document.getElementById('addRandomCryptofish');
+          if (btn) {
+            btn.click();
+            setTimeout(() => {
+              // If no fish spawned for any reason, try once more
+              const countEl = document.getElementById('count');
+              const count = countEl ? parseInt(countEl.textContent||'0',10) : (window.AquariumState && window.AquariumState.fishList ? window.AquariumState.fishList.length : 0);
+              if (!count || count < 1) { btn.click(); }
+            }, 1200);
+          }
+        };
+        // Delay slightly to let canvases size up
+        setTimeout(trySpawn, 400);
+      } else {
+        if (window.AquariumConfig) window.AquariumConfig.MAX_FISH = null;
+      }
+    }
+  };
+
+  // Patch FishManager.addFishFromCanvas to enforce MAX_FISH in Game Mode
+  function patchFishLimit(){
+    if (!window.FishManager || window.FishManager._patchedForLimit) return;
+    const orig = window.FishManager.addFishFromCanvas;
+    if (typeof orig !== 'function') return;
+    window.FishManager.addFishFromCanvas = function(canvas, opts){
+      const st = window.AquariumState || { fishList: [] };
+      const limit = (window.AquariumConfig && window.AquariumConfig.MAX_FISH) || null;
+      const isGame = document.body.classList.contains('game-mode');
+      if (isGame && limit != null && st.fishList && st.fishList.length >= limit) {
+        alert('Fish limit reached (20) in Game Mode.');
+        return;
+      }
+      return orig.call(this, canvas, opts);
+    };
+    window.FishManager._patchedForLimit = true;
+  }
+
+  // Wire up buttons after DOM and existing scripts have initialized
+  function initModeUI(){
+    const overlay = document.getElementById('modeOverlay');
+    const btnGame = document.getElementById('chooseGame');
+    const btnPeace = document.getElementById('choosePeaceful');
+    if (!overlay || !btnGame || !btnPeace) return;
+
+    btnGame.addEventListener('click', ()=>{
+      overlay.style.display = 'none';
+      ModeManager.setMode('game');
+    });
+    btnPeace.addEventListener('click', ()=>{
+      overlay.style.display = 'none';
+      ModeManager.setMode('peaceful');
+    });
+
+    // This ensures our patch runs even if FishManager loads later
+    patchFishLimit();
+    const iv = setInterval(()=>{
+      try { patchFishLimit(); } catch(e) {}
+      // stop trying after 5 seconds
+    }, 250);
+    setTimeout(()=>clearInterval(iv), 5000);
+  }
+
+  // Run after window load so existing init has fired
+  if (document.readyState === 'complete') initModeUI();
+  else window.addEventListener('load', initModeUI);
+})();
+</script>
+
+</script>
+<script>
+// === Buy Cryptofish (Slot 1) ===
+// Charges $100 ONLY if a random Cryptofish is successfully spawned.
+(function(){
+  const tile = document.getElementById('tile-buyCryptofish');
+  const statusEl = document.getElementById('buyCryptofishStatus');
+  const PRICE = 100;
+
+  function getMoney(){
+    const st = window.AquariumState || {};
+    if (typeof st.money === 'number') return (st.money|0);
+    if (window.Money && window.Money.get) return (window.Money.get()|0);
+    return 0;
+  }
+  function setMoney(v){
+    const st = window.AquariumState || {};
+    const next = (v|0);
+    if (typeof st.money === 'number'){ st.money = next; if (st.updateMoneyCounter){ try{ st.updateMoneyCounter(); }catch(e){} } }
+    if (window.Money && window.Money.set){ try{ window.Money.set(next); }catch(e){} }
+  }
+  function status(msg){ try{ if (window.AquariumState && window.AquariumState.setStatus) window.AquariumState.setStatus(msg);}catch(e){} }
+
+  function clickAddRandomButton(){
+    const btn = document.getElementById('addRandomCryptofish');
+    if (btn && typeof btn.click === 'function'){ btn.click(); return true; }
+    if (typeof window.onClickRandom === 'function'){
+      try{
+        const maybe = window.onClickRandom(btn);
+        if (typeof maybe === 'function'){ maybe(); return true; }
+        window.onClickRandom(); return true;
+      }catch(e){}
+    }
+    return false;
+  }
+
+  function waitForFishAdded(prevCount, timeoutMs){
+    return new Promise((resolve)=>{
+      const start = performance.now();
+      (function check(){
+        const st = window.AquariumState || {};
+        const cur = (st.fishList && st.fishList.length)|0;
+        if (cur > prevCount){ resolve(true); return; }
+        if ((performance.now() - start) >= timeoutMs){ resolve(false); return; }
+        setTimeout(check, 120);
+      })();
+    });
+  }
+
+  async function buyCryptofish(){
+    if (!tile) return;
+    if (getMoney() < PRICE){ status("Not enough money ($100 needed)"); return; }
+    if (statusEl) statusEl.textContent = "Spawning";
+    tile.classList.add('loading');
+    try{
+      const st = window.AquariumState || {};
+      const before = (st.fishList && st.fishList.length)|0;
+      const clicked = clickAddRandomButton();
+      if (!clicked){
+        if (statusEl) statusEl.textContent = "Spawn control not found";
+        return;
+      }
+      const ok = await waitForFishAdded(before, 8000);
+      if (ok){
+        setMoney(getMoney() - PRICE);
+        if (statusEl) statusEl.textContent = "Purchased!";
+        tile.classList.add('success-flash');
+        setTimeout(()=>{ tile.classList.remove('success-flash'); if (statusEl) statusEl.textContent = "Click to buy"; }, 1400);
+      } else {
+        if (statusEl) statusEl.textContent = "Spawn failed (no charge)";
+      }
+    }catch(e){
+      console.error("[BuyCryptofish] error:", e);
+      if (statusEl) statusEl.textContent = "Error (no charge)";
+    }finally{
+      tile.classList.remove('loading');
+    }
+  }
+
+  if (tile){
+    tile.addEventListener('click', (ev)=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      buyCryptofish();
+    });
+  }
+})();
+</script>
+
+<script>
+// === Runtime hardening: keep the game loop alive even if a one-off error occurs ===
+(function(){
+  if (!window.AquariumApp) return;
+  if (window.__rafHardened) return;
+  window.__rafHardened = true;
+
+  // Guard CoinManager if present
+  function guardCoinManager(){
+    var cm = window.CoinManager;
+    if (!cm || cm.__guarded) return;
+    try {
+      if (typeof cm.update === 'function'){
+        var _origUpdate = cm.update;
+        cm.update = function(dt){
+          try{ return _origUpdate.call(cm, dt); }
+          catch(e){ console.warn('[CoinManager.update] error suppressed:', e); }
+        };
+      }
+      if (typeof cm.renderAllCoins === 'function'){
+        var _origRender = cm.renderAllCoins;
+        cm.renderAllCoins = function(ctx){
+          try{ return _origRender.call(cm, ctx); }
+          catch(e){ console.warn('[CoinManager.renderAllCoins] error suppressed:', e); }
+        };
+      }
+      cm.__guarded = true;
+    } catch(e){ console.warn('Failed to guard CoinManager', e); }
+  }
+  guardCoinManager();
+  setTimeout(guardCoinManager, 2000);
+
+  // Wrap render to always schedule the next frame
+  var _origRender = window.AquariumApp.render;
+  if (typeof _origRender === 'function'){
+    window.AquariumApp.render = function(currentTime){
+      try {
+        _origRender.call(window.AquariumApp, currentTime);
+      } catch (e){
+        console.error('[Render Loop] recovered from error:', e && e.stack || e);
+        try{
+          if (window.AquariumState && window.AquariumState.setStatus){
+            window.AquariumState.setStatus('Recovered from a runtime error');
+          }
+        }catch(_){}
+      } finally {
+        try{ requestAnimationFrame(window.AquariumApp.render); }catch(_){}
+      }
+    };
+  }
+
+  // If something throws before first RAF, ensure we kick off a frame shortly after load
+  if (document.readyState === 'complete'){
+    setTimeout(function(){ try{ requestAnimationFrame(window.AquariumApp.render);}catch(_){} }, 50);
+  } else {
+    window.addEventListener('load', function(){
+      setTimeout(function(){ try{ requestAnimationFrame(window.AquariumApp.render);}catch(_){}} , 50);
+    });
+  }
+})();
+</script>
+
+<script>
+// === Render Throttle ===
+(function(){
+  if (!window.AquariumApp) return;
+  if (window.__rafThrottle) return;
+  window.__rafThrottle = true;
+
+  var _origRender = window.AquariumApp.render;
+  if (typeof _origRender !== 'function') return;
+
+  var lastDraw = 0;
+  window.AquariumApp.render = function(now){
+    try {
+      var tgt = (window.Perf && window.Perf.targetFPS) ? window.Perf.targetFPS : 60;
+      var minDelta = 1000 / Math.max(1, tgt);
+      if (!lastDraw || (now - lastDraw) >= (minDelta - 1)) {
+        _origRender.call(window.AquariumApp, now);
+        lastDraw = now;
+      } else {
+        // still advance simulation if your engine separates update/draw;
+        // if not, simply skip to next RAF
+      }
+    } catch (e){
+      console.error('[RAF throttle] recovered:', e);
+    } finally {
+      try{ requestAnimationFrame(window.AquariumApp.render); }catch(_){}
+    }
+  };
+})();
+</script>
+
+<script>
+(function(){
+  if (window.CrabManager) return; // idempotent
+
+  window.CrabConfig = {
+    basePrice: 1000,
+    upgradePrice: 1000,
+    maxLevel: 10,
+    baseSpeed: 20,        // px/sec
+    speedPerLevel: 5,     // + px/sec per level
+    width: 280,
+    height: 120,
+    groundOffset: 6       // pixels above bottom
+  };
+
+  const UI = {
+    get priceEl(){ return document.getElementById('crabPrice'); },
+    get statusEl(){ return document.getElementById('crabStatus'); },
+    flashSuccess(el){
+      try{
+        el.classList.add('success-flash');
+        setTimeout(()=>el.classList.remove('success-flash'), 400);
+      }catch(_){}
+    },
+    refresh(owned, level){
+      const priceEl = this.priceEl;
+      const statusEl = this.statusEl;
+      if (!priceEl || !statusEl) return;
+      if (!owned){
+        priceEl.textContent = '$' + CrabConfig.basePrice;
+        statusEl.textContent = 'Not purchased';
+      }else{
+        if (level >= CrabConfig.maxLevel){
+          priceEl.textContent = 'Max level';
+          statusEl.textContent = 'Level ' + level + ' (max)';
+        }else{
+          priceEl.textContent = '$' + CrabConfig.upgradePrice;
+          statusEl.textContent = 'Level ' + level + ' — click to upgrade';
+        }
+      }
+    }
+  };
+
+  
+    // AutoFeeder-style spend (HUD->state->HUD update order)
+    function spend(cost){
+      const st = window.AquariumState || {};
+      const amount = (cost|0);
+      let hud = null;
+      if (window.Money && window.Money.get){ try { hud = window.Money.get()|0; } catch(e){} }
+      const hasSt = (typeof st.money === 'number');
+      let cur = hasSt ? (st.money|0) : (hud !== null ? hud : 0);
+      if (cur >= amount){
+        const next = (cur - amount) | 0;
+        if (window.Money && window.Money.set){ try { window.Money.set(next); } catch(e){} }
+        if (hasSt){
+          st.money = next;
+          if (st.updateMoneyCounter) try { st.updateMoneyCounter(); } catch(e){}
+        }
+        return true;
+      }
+      return false;
+    }
+    
+  window.CrabManager = {
+    owned: false,
+    level: 0,
+    x: 0,
+    y: 0,
+    dir: 1,
+    spr: null,
+    lastW: 0,
+    lastH: 0,
+
+    speed(){
+      if (!this.owned || this.level <= 0) return 0;
+      return CrabConfig.baseSpeed + (this.level - 1) * CrabConfig.speedPerLevel;
+    },
+
+    ensureSprite(){
+  if (this.spr) return this.spr;
+  // Draw a base sprite at 28x12, scale handled in draw()
+  const baseW = 28, baseH = 12;
+  const c = document.createElement('canvas');
+  c.width = baseW; c.height = baseH;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  // body
+  ctx.fillStyle = '#e74c3c';
+  ctx.fillRect(6, 3, 16, 7);
+  ctx.fillRect(8, 2, 12, 2);
+  // claws
+  ctx.fillStyle = '#e67e22';
+  ctx.fillRect(2, 5, 4, 3);
+  ctx.fillRect(22, 5, 4, 3);
+  // legs
+  ctx.fillStyle = '#d35400';
+  ctx.fillRect(6, 11, 3, 1);
+  ctx.fillRect(19, 11, 3, 1);
+  // eyes
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(10, 2, 1, 1);
+  ctx.fillRect(17, 2, 1, 1);
+  this.spr = c;
+  return c;
+},
+
+    purchase(){
+      if (this.owned){
+        return this.upgrade();
+      }
+      if (!window.Money || !window.Money.spend) return false;
+      if (!spend(CrabConfig.basePrice)) return false;
+      this.owned = true;
+      this.level = 1;
+      
+          this.place();
+      UI.refresh(this.owned, this.level);
+      const priceEl = UI.priceEl; if (priceEl) UI.flashSuccess(priceEl);
+      return true;
+    },
+
+    upgrade(){
+      if (!this.owned || this.level >= CrabConfig.maxLevel) return false;
+      if (!window.Money || !window.Money.spend) return false;
+      if (!spend(CrabConfig.upgradePrice)) return false;
+      this.level += 1;
+      UI.refresh(this.owned, this.level);
+      const statusEl = UI.statusEl; if (statusEl) UI.flashSuccess(statusEl);
+      return true;
+    },
+
+    place(){
+      const st = window.AquariumState || {};
+      const fc = st.fishCanvas;
+      if (!fc) return;
+      const margin = 8;
+      this.x = fc.width * 0.5 - CrabConfig.width * 0.5;
+      this.y = fc.height - CrabConfig.height - CrabConfig.groundOffset;
+      this.dir = Math.random() < 0.5 ? -1 : 1;
+    },
+
+    update(dt){
+      if (!this.owned || this.level <= 0) return;
+      const st = window.AquariumState || {};
+      const fc = st.fishCanvas;
+      const ctx = st.fishCtx;
+      if (!fc || !ctx) return;
+
+      const W = fc.width, H = fc.height;
+      this.y = H - CrabConfig.height - CrabConfig.groundOffset;
+
+      // Move left↔right
+      const dx = this.speed() * (dt / 1000);
+      this.x += this.dir * (10*(dx));
+      if (this.x < 0){ this.x = 0; this.dir = 1; }
+      if (this.x + CrabConfig.width > W){ this.x = W - CrabConfig.width; this.dir = -1; }
+
+      // Collect coins near ground: overlap check with crab bounds (with small padding)
+      const coins = st.coins || [];
+      if (coins && coins.length){
+        const cx1 = this.x - 2, cy1 = this.y - 2;
+        const cx2 = this.x + CrabConfig.width + 2, cy2 = this.y + CrabConfig.height + 2;
+
+        let gained = 0;
+        for (let i = 0; i < coins.length; i++){
+          const c = coins[i];
+          if (!c || c._collected) continue;
+          const size = (c.size || 6);
+          const x1 = (c.x || 0), y1 = (c.y || 0);
+          const x2 = x1 + size, y2 = y1 + size;
+          if (x2 >= cx1 && x1 <= cx2 && y2 >= cy1 && y1 <= cy2){
+            const val = c.value || c.amount || c.v || c.val || 10;
+            if (window.CoinManager && typeof window.CoinManager.tryCollectAt==='function'){ try { window.CoinManager.tryCollectAt((x1+size/2)|0, (y1+size/2)|0); } catch(_){}} else { const st=window.AquariumState||{}; const cur=(st.money|0)||0; const next=(cur + (val|0))|0; st.money = next; if (st.updateMoneyCounter) try{ st.updateMoneyCounter(); }catch(_){} if (window.Money && window.Money.set){ try{ window.Money.set(next);}catch(_){}} }
+            c._collected = true;
+            gained += (val|0);
+          }
+        }
+        if (gained > 0){
+          // remove collected coins
+          try {
+            st.coins = coins.filter(c => !c._collected);
+          } catch(_){}
+        }
+      }
+    },
+
+    draw(){
+      if (!this.owned || this.level <= 0) return;
+      const st = window.AquariumState || {};
+      const ctx = st.fishCtx;
+      if (!ctx) return;
+      const spr = this.ensureSprite();
+      try{
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        
+        const w = CrabConfig.width, h = CrabConfig.height;
+        if (this.dir < 0){
+          ctx.translate(this.x + w, this.y);
+          ctx.scale(-1, 1);
+          ctx.drawImage(spr, 0, 0, w, h);
+        } else {
+          ctx.drawImage(spr, this.x, this.y, w, h);
+        }
+    ctx.restore();
+      }catch(_){}
+    }
+  };
+
+  // Bind shop tile
+  document.addEventListener('click', function(e){
+    const tile = e.target.closest && e.target.closest('#tile-crab');
+    if (!tile) return;
+    e.preventDefault(); e.stopPropagation();
+    if (!window.CrabManager.owned){
+      window.CrabManager.purchase();
+    } else {
+      window.CrabManager.upgrade();
+    }
+  }, true);
+
+  // Update UI text on load
+  (function(){ try{ 
+    const owned = window.CrabManager.owned, lvl = window.CrabManager.level;
+    UI.refresh(owned, lvl);
+  }catch(_){}})();
+
+  // Lightweight RAF just for the crab
+  (function(){
+    let last = performance.now();
+    function loop(now){
+      const dt = now - last; last = now;
+      try{
+        window.CrabManager.update(dt);
+        window.CrabManager.draw();
+      }catch(_){}
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  })();
+
+  // Re-place crab on resize
+  window.addEventListener('resize', function(){
+    try{ window.CrabManager.place(); }catch(_){}
+  });
+})();
+</script>
+
+<script>
+// CrabCollector module + tile handler mirroring Auto Feeder's flow
+(function(){
+  const SAND_FRACTION = 0.08;
+  let crab = null;
+  let rafId = null;
+  let lastTime = performance.now();
+
+  // Canvases
+  const stage = document.getElementById('stage');
+  const crabCanvas = document.getElementById('crabLayer');
+  if (crabCanvas) {
+    crabCanvas.style.position = 'absolute';
+    crabCanvas.style.inset = '0';
+    crabCanvas.style.zIndex = '5';
+    crabCanvas.style.pointerEvents = 'none';
+  }
+  const ctx = crabCanvas ? crabCanvas.getContext('2d') : null;
+  if (ctx) ctx.imageSmoothingEnabled = false;
+
+  function sizeCanvas(){
+    const st = window.AquariumState;
+    if (st && st.fishCanvas){
+      crabCanvas.width = st.fishCanvas.width|0;
+      crabCanvas.height = st.fishCanvas.height|0;
+    } else if (stage){
+      const r = stage.getBoundingClientRect();
+      crabCanvas.width = r.width|0;
+      crabCanvas.height = r.height|0;
+    }
+  }
+  window.addEventListener('resize', sizeCanvas);
+  setTimeout(sizeCanvas, 0);
+
+  function createCrab(){
+    const scale = 10, base = 16;
+    const w = base*scale, h = base*scale;
+    const sandTop = crabCanvas.height - Math.floor(crabCanvas.height * SAND_FRACTION);
+    return { w, h, x: Math.max(0,(crabCanvas.width - w)/2), y: Math.max(0, sandTop - h - 4), vx: 120, dir: 1 };
+  }
+  function clampY(c){
+    const sandTop = crabCanvas.height - Math.floor(crabCanvas.height * SAND_FRACTION);
+    c.y = Math.min(c.y, sandTop - c.h - 2);
+    if (c.y < 0) c.y = 0;
+  }
+  function collectCoins(rx, ry, rw, rh){
+    const st = window.AquariumState;
+    if (!st || !Array.isArray(st.coins)) return;
+    const useCM = !!(window.CoinManager && typeof window.CoinManager.tryCollectAt === 'function');
+    for (let i = st.coins.length - 1; i >= 0; i--){
+      const c = st.coins[i];
+      const s = Math.max(1, c.size|0);
+      const cx = (c.x|0) + (s/2);
+      const cy = (c.y|0) + (s/2);
+      if (cx >= rx && cx <= rx+rw && cy >= ry && cy <= ry+rh){
+        if (useCM) window.CoinManager.tryCollectAt(cx, cy);
+        else {
+          let next = ((typeof st.money === 'number' ? st.money|0 : 0) + (c.value|0)) | 0;
+          if (typeof st.money === 'number'){ st.money = next; if (st.updateMoneyCounter) try { st.updateMoneyCounter(); } catch(e){} }
+          if (window.Money && window.Money.set) { try { window.Money.set(next); } catch(e){} }
+          st.coins.splice(i,1);
+        }
+      }
+    }
+  }
+  function drawCrab(ctx, x, y, s){
+    function r(px,py,pw,ph,fill){ ctx.fillStyle = fill; ctx.fillRect(x+px*s, y+py*s, pw*s, ph*s); }
+    r(3,7,10,5,"#e74c3c"); r(4,6,8,2,"#e74c3c");
+    r(2,11,2,1,"#d35400"); r(12,11,2,1,"#d35400");
+    r(0,7,3,2,"#e67e22"); r(13,7,3,2,"#e67e22");
+    r(5,6,1,1,"#ffffff"); r(10,6,1,1,"#ffffff");
+  }
+  function update(dt){
+    if (!crab) return;
+    crab.x += crab.dir * crab.vx * dt;
+    if (crab.x <= 0){ crab.x = 0; crab.dir = 1; }
+    if (crab.x + crab.w >= crabCanvas.width){ crab.x = crabCanvas.width - crab.w; crab.dir = -1; }
+    clampY(crab);
+    collectCoins(crab.x, crab.y, crab.w, crab.h);
+  }
+  function render(){
+    if (!ctx) return;
+    ctx.clearRect(0,0,crabCanvas.width, crabCanvas.height);
+    if (crab) drawCrab(ctx, crab.x|0, crab.y|0, 10);
+  }
+  function loop(){
+    const now = performance.now();
+    const dt = Math.min(0.05, (now - lastTime)/1000);
+    lastTime = now;
+    update(dt);
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+  function ensureLoop(){ if (!rafId){ lastTime = performance.now(); rafId = requestAnimationFrame(loop); } }
+
+  // EXACT same spend() semantics as AutoFeeder (HUD first, then state)
+  function spend(cost){
+    const st = window.AquariumState || {};
+    const amount = (cost|0);
+    let hud = null;
+    if (window.Money && window.Money.get){ try { hud = window.Money.get()|0; } catch(e){} }
+    const hasSt = (typeof st.money === 'number');
+    let cur = hasSt ? (st.money|0) : (hud !== null ? hud : 0);
+    if (cur >= amount){
+      const next = (cur - amount) | 0;
+      if (window.Money && window.Money.set){ try { window.Money.set(next); } catch(e){} }
+      if (hasSt){ st.money = next; if (st.updateMoneyCounter) try { st.updateMoneyCounter(); } catch(e){} }
+      return true;
+    }
+    return false;
+  }
+
+  // Public module mirroring AutoFeeder API
+  window.CrabCollector = (function(){
+    let purchased = false;
+    function buy(){
+      if (purchased) return false;
+      const price = 1000;
+      if (!spend(price)) return false;
+      purchased = true;
+      crab = createCrab();
+      sizeCanvas();
+      ensureLoop();
+      return true;
+    }
+    function upgrade(){
+      if (!purchased) return false;
+      if (!spend(1000)) return false;
+      crab.vx *= 1.2;
+      return true;
+    }
+    function isPurchased(){ return purchased; }
+    return { buy, upgrade, isPurchased };
+  })();
+
+  // Tile wiring: reuse the AutoFeeder click logic verbatim (only module name changes)
+  (function(){
+    const tile = document.getElementById('tile-crab');
+    const priceEl = document.getElementById('crabPrice');
+    const statusEl = document.getElementById('crabStatus');
+    if (!tile) return;
+
+    function labelFor(level){ return level || 0; } // simple label
+
+    function previewText(){
+      // Show static next-cost text similar to AF
+      return "Next: $1000 → +20% speed";
+    }
+    function updateHover(){ tile.setAttribute('title', previewText()); }
+
+    function updateTile(){
+      updateHover();
+      if (window.CrabCollector && window.CrabCollector.isPurchased()){
+        if (priceEl) priceEl.textContent = "$1000";
+        if (statusEl) statusEl.textContent = "Purchased (upgrade available)";
+      } else {
+        if (priceEl) priceEl.textContent = "$1000";
+        if (statusEl) statusEl.textContent = "Click to buy";
+      }
+    }
+
+    // Primary click handler (stop other old handlers) — same as AutoFeeder
+    tile.addEventListener('click', function(ev){
+      ev.stopImmediatePropagation();
+      if (!window.CrabCollector) return;
+      if (!window.CrabCollector.isPurchased()) window.CrabCollector.buy();
+      else window.CrabCollector.upgrade();
+      updateTile();
+    });
+
+    tile.addEventListener('mousemove', updateHover);
+    updateTile();
+  })();
+})();
+</script>
+
+</body>
+</html>
